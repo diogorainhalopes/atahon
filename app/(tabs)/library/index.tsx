@@ -1,0 +1,53 @@
+import { View, Text, StyleSheet } from 'react-native';
+import Screen from '@components/Screen';
+import { BookOpen } from 'lucide-react-native';
+import { colors } from '@theme/colors';
+import { typography } from '@theme/typography';
+
+export default function LibraryScreen() {
+  return (
+    <Screen>
+      <View style={styles.header}>
+        <Text style={styles.title}>Library</Text>
+      </View>
+      <View style={styles.empty}>
+        <BookOpen size={64} color={colors.text.muted} strokeWidth={1.5} />
+        <Text style={styles.emptyTitle}>Your library is empty</Text>
+        <Text style={styles.emptySubtitle}>
+          Browse extensions to find and add manga to your library
+        </Text>
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.DEFAULT,
+  },
+  title: {
+    fontSize: typography.sizes['2xl'],
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+  },
+  empty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  emptySubtitle: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.muted,
+    textAlign: 'center',
+  },
+});

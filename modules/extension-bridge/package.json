@@ -1,0 +1,8 @@
+{
+  "name": "extension-bridge",
+  "version": "1.0.0",
+  "description": "Native Expo Module for Tachiyomi/Mihon extension APK loading",
+  "main": "src/index",
+  "types": "src/index.d.ts",
+  "private": true
+}
