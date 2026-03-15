@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import Screen from '@components/Screen';
 import { Puzzle, Download, Settings, ChevronRight, Info } from 'lucide-react-native';
 import { colors } from '@theme/colors';
@@ -26,6 +27,8 @@ function MenuItem({ icon: Icon, label, onPress }: MenuItemProps) {
 }
 
 export default function MoreScreen() {
+  const router = useRouter();
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -35,7 +38,7 @@ export default function MoreScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Content</Text>
           <View style={styles.sectionCard}>
-            <MenuItem icon={Puzzle} label="Extensions" />
+            <MenuItem icon={Puzzle} label="Extensions" onPress={() => router.push('/extensions')} />
             <View style={styles.divider} />
             <MenuItem icon={Download} label="Downloads" />
           </View>

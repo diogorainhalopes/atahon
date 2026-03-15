@@ -11,7 +11,7 @@ type Tab = {
 
 const tabs: Tab[] = [
   { name: 'library/index', title: 'Library', icon: BookOpen },
-  { name: 'browse/index', title: 'Browse', icon: Compass },
+  { name: 'browse', title: 'Browse', icon: Compass },
   { name: 'updates/index', title: 'Updates', icon: Bell },
   { name: 'history/index', title: 'History', icon: Clock },
   { name: 'more/index', title: 'More', icon: MoreHorizontal },

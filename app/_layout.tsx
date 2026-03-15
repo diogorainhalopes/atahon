@@ -9,6 +9,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { runMigrations } from '@db/client';
+import ExtensionBridge from 'extension-bridge';
+import { Logger } from '@utils/logger';
 
 // Prevent splash from auto hiding
 SplashScreen.preventAutoHideAsync();
@@ -28,16 +30,20 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Run DB migrations
+        await SplashScreen.preventAutoHideAsync();
+  
         await runMigrations();
+  
+        await ExtensionBridge.loadInstalledExtensions();
+  
       } catch (e) {
-        console.error('[DB] Migration failed:', e);
+        Logger.error('Boot', 'Prepare failed:', e);
       } finally {
         setReady(true);
         await SplashScreen.hideAsync();
       }
     }
-
+  
     prepare();
   }, []);
 
@@ -51,6 +57,7 @@ export default function RootLayout() {
 
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="extensions" options={{ animation: 'slide_from_right' }} />
 
             <Stack.Screen
               name="manga/[mangaId]/index"

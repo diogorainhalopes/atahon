@@ -9,21 +9,31 @@ import type {
 } from '../../../src/types/extensions';
 
 // The native Kotlin module — loaded from the Android classloader
-// Full implementation in Phase 1
 let NativeExtensionBridge: ExtensionBridgeNativeModule | null = null;
 
 try {
   NativeExtensionBridge = requireNativeModule('ExtensionBridge');
 } catch {
-  // Native module not yet loaded (e.g. running in Expo Go or web)
   console.warn('[ExtensionBridge] Native module not available — using stub');
 }
 
+export interface InstalledExtensionInfo {
+  pkgName: string;
+  name: string;
+  versionName: string;
+  versionCode: number;
+  lang: string;
+  isNsfw: boolean;
+  sources: SourceInfo[];
+}
+
 export interface ExtensionBridgeNativeModule {
+  loadInstalledExtensions(): Promise<InstalledExtensionInfo[]>;
+  getInstalledExtensions(): Promise<InstalledExtensionInfo[]>;
   getInstalledSources(): Promise<SourceInfo[]>;
-  callSource(sourceId: string, method: string, params: Record<string, unknown>): Promise<string>;
-  installExtension(apkUrl: string, pkgName: string): Promise<void>;
+  installExtension(apkUrl: string, pkgName: string): Promise<InstalledExtensionInfo>;
   uninstallExtension(pkgName: string): Promise<void>;
+  callSource(sourceId: string, method: string, params: Record<string, unknown>): Promise<string>;
 }
 
 // High-level typed wrapper
@@ -35,11 +45,19 @@ class ExtensionBridgeAPI {
     return NativeExtensionBridge;
   }
 
+  async loadInstalledExtensions(): Promise<InstalledExtensionInfo[]> {
+    return this.native().loadInstalledExtensions();
+  }
+
+  async getInstalledExtensions(): Promise<InstalledExtensionInfo[]> {
+    return this.native().getInstalledExtensions();
+  }
+
   async getInstalledSources(): Promise<SourceInfo[]> {
     return this.native().getInstalledSources();
   }
 
-  async installExtension(apkUrl: string, pkgName: string): Promise<void> {
+  async installExtension(apkUrl: string, pkgName: string): Promise<InstalledExtensionInfo> {
     return this.native().installExtension(apkUrl, pkgName);
   }
 
@@ -70,19 +88,19 @@ class ExtensionBridgeAPI {
   }
 
   async getMangaDetails(sourceId: string, mangaUrl: string): Promise<SManga> {
-    return this.call(sourceId, 'getMangaDetails', { url: mangaUrl });
+    return this.call(sourceId, 'getMangaDetails', { mangaUrl })
   }
 
   async getChapterList(sourceId: string, mangaUrl: string): Promise<SChapter[]> {
-    return this.call(sourceId, 'getChapterList', { url: mangaUrl });
+    return this.call(sourceId, 'getChapterList', { mangaUrl });
   }
 
   async getPageList(sourceId: string, chapterUrl: string): Promise<Page[]> {
-    return this.call(sourceId, 'getPageList', { url: chapterUrl });
+    return this.call(sourceId, 'getPageList', { chapterUrl });
   }
 
   async getImageUrl(sourceId: string, pageIndex: number, pageUrl: string): Promise<string> {
-    return this.call(sourceId, 'getImageUrl', { index: pageIndex, url: pageUrl });
+    return this.call(sourceId, 'getImageUrl', { pageIndex, pageUrl });
   }
 }
 

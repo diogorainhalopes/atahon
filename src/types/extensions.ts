@@ -79,6 +79,7 @@ export interface ExtensionInfo {
   installed: boolean;
   hasUpdate?: boolean;
   repoUrl: string;
+  apkUrl: string;
 }
 
 // Index entry from keiyoushi repo

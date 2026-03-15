@@ -28,7 +28,31 @@ export function runMigrations(): void {
 
   for (const [tag, sql] of Object.entries(migrationStatements)) {
     if (!appliedSet.has(tag)) {
-      expo.execSync(sql);
+      try {
+        expo.execSync(sql);
+      } catch (e) {
+        // Schema mismatch from a stale dev database — drop everything and retry fresh
+        expo.execSync(`
+          PRAGMA foreign_keys = OFF;
+          DROP TABLE IF EXISTS download_queue;
+          DROP TABLE IF EXISTS manga_category;
+          DROP TABLE IF EXISTS history;
+          DROP TABLE IF EXISTS chapter;
+          DROP TABLE IF EXISTS manga;
+          DROP TABLE IF EXISTS category;
+          DROP TABLE IF EXISTS extension_repo;
+          DROP TABLE IF EXISTS __drizzle_migrations;
+          PRAGMA foreign_keys = ON;
+        `);
+        expo.execSync(`
+          CREATE TABLE IF NOT EXISTS __drizzle_migrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            hash TEXT NOT NULL UNIQUE,
+            created_at INTEGER NOT NULL
+          );
+        `);
+        expo.execSync(sql);
+      }
       expo.runSync('INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)', [
         tag,
         Date.now(),
