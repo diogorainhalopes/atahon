@@ -1,11 +1,12 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Screen from '@components/Screen';
-import { Compass, ChevronRight, Puzzle } from 'lucide-react-native';
+import { Compass, ChevronRight, Puzzle, ToggleRight } from 'lucide-react-native';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { useInstalledExtensions } from '@queries/extensions';
+import { useSourceStore } from '@stores/sourceStore';
 import type { InstalledExtensionInfo } from 'extension-bridge';
 import type { SourceInfo } from '@/types/extensions';
 
@@ -49,12 +50,16 @@ interface FlatSource {
 export default function BrowseScreen() {
   const router = useRouter();
   const { data: extensions = [], isLoading } = useInstalledExtensions();
+  const enabledSourceIds = useSourceStore((s) => s.enabledSourceIds);
 
-  const sources: FlatSource[] = extensions.flatMap((ext: InstalledExtensionInfo) =>
+  const allSources: FlatSource[] = extensions.flatMap((ext: InstalledExtensionInfo) =>
     ext.sources.map((s) => ({ source: s, extensionName: ext.name })),
   );
 
-  if (!isLoading && sources.length === 0) {
+  const enabledSources = allSources.filter((s) => enabledSourceIds.includes(s.source.id));
+
+  // No extensions installed at all
+  if (!isLoading && allSources.length === 0) {
     return (
       <Screen>
         <View style={styles.header}>
@@ -79,13 +84,39 @@ export default function BrowseScreen() {
     );
   }
 
+  // Extensions installed but no sources enabled
+  if (!isLoading && enabledSources.length === 0) {
+    return (
+      <Screen>
+        <View style={styles.header}>
+          <Text style={styles.title}>Browse</Text>
+        </View>
+        <View style={styles.empty}>
+          <ToggleRight size={64} color={colors.text.muted} strokeWidth={1.5} />
+          <Text style={styles.emptyTitle}>No sources enabled</Text>
+          <Text style={styles.emptySubtitle}>
+            Enable sources in your installed extensions to start browsing
+          </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/extensions')}
+            activeOpacity={0.8}
+          >
+            <Puzzle size={16} color={colors.text.inverse} />
+            <Text style={styles.buttonText}>Manage Extensions</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <View style={styles.header}>
         <Text style={styles.title}>Browse</Text>
       </View>
       <FlatList
-        data={sources}
+        data={enabledSources}
         keyExtractor={(item) => item.source.id}
         renderItem={({ item }) => (
           <SourceRow

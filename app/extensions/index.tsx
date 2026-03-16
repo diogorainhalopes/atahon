@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { Search } from 'lucide-react-native';
+import { Stack, useRouter } from 'expo-router';
+import { ChevronRight, Search } from 'lucide-react-native';
 
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
@@ -21,17 +21,20 @@ import {
   useUninstallExtension,
   useRepos,
 } from '@queries/extensions';
+import { useSourceStore } from '@stores/sourceStore';
 
 // ─── ExtensionRow ─────────────────────────────────────────────────────────────
 
 interface ExtensionRowProps {
   item: ExtensionInfo;
   installing: boolean;
+  enabledCount: number;
   onInstall: () => void;
   onUninstall: () => void;
+  onPress: () => void;
 }
 
-function ExtensionRow({ item, installing, onInstall, onUninstall }: ExtensionRowProps) {
+function ExtensionRow({ item, installing, enabledCount, onInstall, onUninstall, onPress }: ExtensionRowProps) {
   const initial = item.name.charAt(0).toUpperCase();
 
   const actionLabel = item.hasUpdate ? 'Update' : item.installed ? 'Uninstall' : 'Install';
@@ -49,8 +52,14 @@ function ExtensionRow({ item, installing, onInstall, onUninstall }: ExtensionRow
     }
   }
 
+  const metaText = item.installed
+    ? `${item.lang.toUpperCase()} • v${item.versionName} • ${enabledCount}/${item.sources.length} sources enabled`
+    : `${item.lang.toUpperCase()} • v${item.versionName} • ${item.sources.length} source${item.sources.length !== 1 ? 's' : ''}`;
+
+  const Wrapper = item.installed ? TouchableOpacity : View;
+
   return (
-    <View style={styles.row}>
+    <Wrapper style={styles.row} onPress={item.installed ? onPress : undefined} activeOpacity={0.7}>
       <View style={styles.rowIcon}>
         <Text style={styles.rowIconText}>{initial}</Text>
       </View>
@@ -64,9 +73,7 @@ function ExtensionRow({ item, installing, onInstall, onUninstall }: ExtensionRow
             </View>
           )}
         </View>
-        <Text style={styles.rowMeta}>
-          {item.lang.toUpperCase()} • v{item.versionName} • {item.sources.length} source{item.sources.length !== 1 ? 's' : ''}
-        </Text>
+        <Text style={styles.rowMeta}>{metaText}</Text>
       </View>
 
       <TouchableOpacity
@@ -81,13 +88,18 @@ function ExtensionRow({ item, installing, onInstall, onUninstall }: ExtensionRow
           <Text style={[styles.actionText, { color: actionColor }]}>{actionLabel}</Text>
         )}
       </TouchableOpacity>
-    </View>
+
+      {item.installed && (
+        <ChevronRight size={18} color={colors.text.muted} />
+      )}
+    </Wrapper>
   );
 }
 
 // ─── ExtensionsScreen ─────────────────────────────────────────────────────────
 
 export default function ExtensionsScreen() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [installingPkg, setInstallingPkg] = useState<string | null>(null);
 
@@ -95,6 +107,7 @@ export default function ExtensionsScreen() {
   const { data: extensions, isLoading, isError } = useMergedExtensions(repos);
   const installMutation = useInstallExtension();
   const uninstallMutation = useUninstallExtension();
+  const enabledSourceIds = useSourceStore((s) => s.enabledSourceIds);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -119,6 +132,7 @@ export default function ExtensionsScreen() {
     setInstallingPkg(item.pkgName);
     try {
       await installMutation.mutateAsync({ apkUrl: item.apkUrl, pkgName: item.pkgName });
+      router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName } });
     } finally {
       setInstallingPkg(null);
     }
@@ -170,8 +184,10 @@ export default function ExtensionsScreen() {
               <ExtensionRow
                 item={item}
                 installing={installingPkg === item.pkgName}
+                enabledCount={item.sources.filter((s) => enabledSourceIds.includes(s.id)).length}
                 onInstall={() => handleInstall(item)}
                 onUninstall={() => handleUninstall(item)}
+                onPress={() => router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName } })}
               />
             )}
             renderSectionHeader={({ section }) => (

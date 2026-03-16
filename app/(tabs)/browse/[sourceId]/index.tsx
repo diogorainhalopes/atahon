@@ -219,7 +219,7 @@ export default function SourceBrowseScreen() {
           columnWrapperStyle={styles.row}
           contentContainerStyle={[
             styles.grid,
-            { paddingBottom: insets.bottom + spacing[8] },
+            { paddingBottom: insets.bottom + 128 }, // 64 tab bar height + 8 gap
           ]}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}

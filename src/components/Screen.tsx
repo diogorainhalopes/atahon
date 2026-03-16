@@ -42,7 +42,7 @@ export default function Screen({
         styles.container,
         {
           paddingTop: insets.top,
-          paddingBottom: insets.bottom,
+          paddingBottom: insets.bottom + 128, // 64 tab bar height + 8 gap
         },
       ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
