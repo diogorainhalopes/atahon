@@ -17,6 +17,13 @@ export function usePageLoader(
   const [renderKey, setRenderKey] = useState(0);
   const resolvingRef = useRef<Set<number>>(new Set());
 
+  // Clear state when chapter changes
+  useEffect(() => {
+    pagesRef.current = new Map();
+    resolvingRef.current.clear();
+    setRenderKey((k) => k + 1);
+  }, [chapterUrl]);
+
   // Initialize page map when raw pages arrive
   useEffect(() => {
     if (!rawPages) return;

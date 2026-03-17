@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, lt, isNull } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { db } from '@db/client';
 import {
   chapter,
@@ -28,50 +28,24 @@ export async function getChaptersForManga(mangaId: number): Promise<Chapter[]> {
 
 export async function getAdjacentChapters(
   mangaId: number,
-  currentChapterNumber: number | null,
+  _currentChapterNumber: number | null,
   currentId: number,
 ): Promise<{ prev: Chapter | null; next: Chapter | null }> {
-  let prev: Chapter | null = null;
-  let next: Chapter | null = null;
+  // Fetch all chapters in reading order (ascending: Ch1, Ch2, Ch3, ...)
+  // chapterNumber ascending, fallback to descending ID (extensions insert newest-first)
+  const all = await db
+    .select()
+    .from(chapter)
+    .where(eq(chapter.mangaId, mangaId))
+    .orderBy(asc(chapter.chapterNumber), desc(chapter.id));
 
-  if (currentChapterNumber != null) {
-    // Next = higher chapter number
-    const nextRows = await db
-      .select()
-      .from(chapter)
-      .where(and(eq(chapter.mangaId, mangaId), gt(chapter.chapterNumber, currentChapterNumber)))
-      .orderBy(asc(chapter.chapterNumber))
-      .limit(1);
-    next = nextRows[0] ?? null;
+  const idx = all.findIndex((c) => c.id === currentId);
+  if (idx === -1) return { prev: null, next: null };
 
-    // Prev = lower chapter number
-    const prevRows = await db
-      .select()
-      .from(chapter)
-      .where(and(eq(chapter.mangaId, mangaId), lt(chapter.chapterNumber, currentChapterNumber)))
-      .orderBy(desc(chapter.chapterNumber))
-      .limit(1);
-    prev = prevRows[0] ?? null;
-  } else {
-    // Fall back to ID ordering when chapterNumber is null
-    const nextRows = await db
-      .select()
-      .from(chapter)
-      .where(and(eq(chapter.mangaId, mangaId), gt(chapter.id, currentId)))
-      .orderBy(asc(chapter.id))
-      .limit(1);
-    next = nextRows[0] ?? null;
-
-    const prevRows = await db
-      .select()
-      .from(chapter)
-      .where(and(eq(chapter.mangaId, mangaId), lt(chapter.id, currentId)))
-      .orderBy(desc(chapter.id))
-      .limit(1);
-    prev = prevRows[0] ?? null;
-  }
-
-  return { prev, next };
+  return {
+    prev: idx > 0 ? all[idx - 1] : null,
+    next: idx < all.length - 1 ? all[idx + 1] : null,
+  };
 }
 
 export async function saveReadingProgress(

@@ -3,8 +3,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import { FlashList, type FlashListRef, type ViewToken } from '@shopify/flash-list';
 import type { Chapter } from '@db/schema';
 import type { ReaderPage } from './types';
-import type { ScaleType } from '@stores/readerStore';
-import { PageImage } from './PageImage';
+import { ContinuousPageImage } from './ContinuousPageImage';
 import { ChapterTransitionPage } from './ChapterTransitionPage';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -17,7 +16,6 @@ interface WebtoonViewerProps {
   pages: ReaderPage[];
   currentPage: number;
   initialPage: number;
-  scaleType: ScaleType;
   currentChapterName: string;
   prevChapter: Chapter | null;
   nextChapter: Chapter | null;
@@ -31,7 +29,6 @@ export const WebtoonViewer = forwardRef<FlashListRef<any>, WebtoonViewerProps>(f
   {
     pages,
     initialPage,
-    scaleType,
     currentChapterName,
     prevChapter,
     nextChapter,
@@ -75,17 +72,14 @@ export const WebtoonViewer = forwardRef<FlashListRef<any>, WebtoonViewerProps>(f
       }
 
       return (
-        <PageImage
+        <ContinuousPageImage
           page={item.page}
-          scaleType={scaleType}
           onRetry={onRetryPage}
-          onTapZone={(zone) => {
-            if (zone === 'center') onCenterTap?.();
-          }}
+          onTap={onCenterTap}
         />
       );
     },
-    [scaleType, currentChapterName, prevChapter, nextChapter, onRetryPage, onCenterTap, onChapterNavigate],
+    [currentChapterName, prevChapter, nextChapter, onRetryPage, onCenterTap, onChapterNavigate],
   );
 
   const onViewableItemsChanged = useCallback(

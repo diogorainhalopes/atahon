@@ -1,7 +1,15 @@
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@db/client';
-import { manga, chapter } from '@db/schema';
+import { manga, chapter, history, type Manga } from '@db/schema';
 import type { SChapter } from '@/types/extensions';
+
+export async function getLibraryManga(): Promise<Manga[]> {
+  return db
+    .select()
+    .from(manga)
+    .where(eq(manga.inLibrary, true))
+    .orderBy(desc(manga.libraryAddedAt));
+}
 
 export async function updateMangaDetails(
   id: number,
@@ -55,6 +63,40 @@ export async function toggleMangaInLibrary(
       updatedAt: Math.floor(Date.now() / 1000),
     })
     .where(eq(manga.id, id));
+}
+
+export async function getLibrarySourceUrls(sourceId: string): Promise<Set<string>> {
+  const rows = await db
+    .select({ sourceUrl: manga.sourceUrl })
+    .from(manga)
+    .where(and(eq(manga.sourceId, sourceId), eq(manga.inLibrary, true)));
+  return new Set(rows.map((r) => r.sourceUrl));
+}
+
+export async function getLatestReadChapters(
+  mangaIds: number[],
+): Promise<Record<number, { chapterNumber: number | null; name: string }>> {
+  if (mangaIds.length === 0) return {};
+
+  const rows = await db
+    .select({
+      mangaId: history.mangaId,
+      chapterNumber: chapter.chapterNumber,
+      name: chapter.name,
+      readAt: history.readAt,
+    })
+    .from(history)
+    .innerJoin(chapter, eq(history.chapterId, chapter.id))
+    .where(inArray(history.mangaId, mangaIds))
+    .orderBy(desc(history.readAt));
+
+  const result: Record<number, { chapterNumber: number | null; name: string }> = {};
+  for (const row of rows) {
+    if (!(row.mangaId in result)) {
+      result[row.mangaId] = { chapterNumber: row.chapterNumber, name: row.name };
+    }
+  }
+  return result;
 }
 
 export async function upsertChaptersFromSource(

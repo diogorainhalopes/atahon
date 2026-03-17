@@ -86,7 +86,7 @@ const READING_MODES: { label: string; value: ReadingMode }[] = [
   { label: 'LTR', value: 'ltr' },
   { label: 'RTL', value: 'rtl' },
   { label: 'Vertical', value: 'vertical' },
-  { label: 'Webtoon', value: 'webtoon' },
+  { label: 'Long Strip', value: 'webtoon' },
 ];
 
 const SCALE_TYPES: { label: string; value: ScaleType }[] = [

@@ -30,12 +30,10 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        await SplashScreen.preventAutoHideAsync();
-  
-        await runMigrations();
-  
+        runMigrations();
+
         await ExtensionBridge.loadInstalledExtensions();
-  
+
       } catch (e) {
         Logger.error('Boot', 'Prepare failed:', e);
       } finally {

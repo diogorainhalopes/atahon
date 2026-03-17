@@ -25,6 +25,7 @@ import {
   useSearchManga,
   useUpsertBrowseManga,
 } from '@queries/sources';
+import { useLibrarySourceUrls } from '@queries/manga';
 
 const NUM_COLUMNS = 3;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -39,10 +40,11 @@ type Tab = 'popular' | 'latest' | 'search';
 
 interface MangaCardProps {
   manga: SManga;
+  inLibrary?: boolean;
   onPress: () => void;
 }
 
-function MangaCard({ manga, onPress }: MangaCardProps) {
+function MangaCard({ manga, inLibrary, onPress }: MangaCardProps) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
       <View style={styles.cardImageBox}>
@@ -57,6 +59,11 @@ function MangaCard({ manga, onPress }: MangaCardProps) {
             <Text style={styles.cardPlaceholderLetter}>
               {manga.title.charAt(0).toUpperCase()}
             </Text>
+          </View>
+        )}
+        {inLibrary && (
+          <View style={styles.ribbon}>
+            <Text style={styles.ribbonText}>IN LIBRARY</Text>
           </View>
         )}
       </View>
@@ -76,6 +83,7 @@ export default function SourceBrowseScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
 
+  const { data: libraryUrls } = useLibrarySourceUrls(sourceId);
   const upsert = useUpsertBrowseManga();
   const popularQuery = usePopularManga(sourceId);
   const latestQuery = useLatestUpdates(sourceId);
@@ -122,10 +130,14 @@ export default function SourceBrowseScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: SManga }) => (
-      <MangaCard manga={item} onPress={() => handleMangaPress(item)} />
+      <MangaCard
+        manga={item}
+        inLibrary={libraryUrls?.has(item.url)}
+        onPress={() => handleMangaPress(item)}
+      />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sourceId],
+    [sourceId, libraryUrls],
   );
 
   return (
@@ -342,6 +354,20 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes['3xl'],
     fontWeight: typography.weights.bold,
     color: colors.text.muted,
+  },
+  ribbon: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: colors.accent.DEFAULT,
+    borderRadius: radius.sm,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  ribbonText: {
+    fontSize: 9,
+    fontWeight: typography.weights.bold,
+    color: '#fff',
   },
   cardTitle: {
     marginTop: spacing[1],

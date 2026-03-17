@@ -71,6 +71,15 @@ export function useReaderGestures({
   const panGesture = Gesture.Pan()
     .minPointers(1)
     .maxPointers(2)
+    .manualActivation(true)
+    .onTouchesMove((_e, stateManager) => {
+      'worklet';
+      if (scale.value > 1.05) {
+        stateManager.activate();
+      } else {
+        stateManager.fail();
+      }
+    })
     .onStart(() => {
       'worklet';
       savedTranslateX.value = translateX.value;
@@ -78,8 +87,6 @@ export function useReaderGestures({
     })
     .onUpdate((e) => {
       'worklet';
-      if (scale.value <= 1) return;
-
       const maxTranslateX = (containerWidth * (scale.value - 1)) / 2;
       const maxTranslateY = (containerHeight * (scale.value - 1)) / 2;
 
@@ -103,8 +110,6 @@ export function useReaderGestures({
     })
     .onEnd(() => {
       'worklet';
-      if (scale.value <= 1) return;
-
       const maxTranslateX = (containerWidth * (scale.value - 1)) / 2;
       const maxTranslateY = (containerHeight * (scale.value - 1)) / 2;
 
@@ -119,8 +124,7 @@ export function useReaderGestures({
       } else if (translateY.value < -maxTranslateY) {
         translateY.value = withSpring(-maxTranslateY, { damping: 15 });
       }
-    })
-    .enabled(true); // Pan is always active but ignores input when scale <= 1
+    });
 
   // ─── Double tap to zoom ─────────────────────────────────────────────
   const doubleTapGesture = Gesture.Tap()

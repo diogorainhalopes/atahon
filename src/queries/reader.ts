@@ -11,7 +11,7 @@ import {
 export const readerKeys = {
   all: ['reader'] as const,
   chapter: (id: number) => [...readerKeys.all, 'chapter', id] as const,
-  pages: (chapterId: number) => [...readerKeys.all, 'pages', chapterId] as const,
+  pages: (chapterUrl: string) => [...readerKeys.all, 'pages', chapterUrl] as const,
   adjacent: (mangaId: number, chapterId: number) =>
     [...readerKeys.all, 'adjacent', mangaId, chapterId] as const,
 };
@@ -47,7 +47,7 @@ export function usePageList(
   enabled: boolean,
 ) {
   return useQuery<Page[]>({
-    queryKey: readerKeys.pages(chapterUrl.length), // keyed by chapterUrl content
+    queryKey: readerKeys.pages(chapterUrl),
     queryFn: () => ExtensionBridge.getPageList(sourceId, chapterUrl),
     enabled,
     staleTime: 30 * 60_000, // pages don't change often
@@ -62,6 +62,7 @@ export function useAdjacentChapters(
   return useQuery({
     queryKey: readerKeys.adjacent(mangaId, chapterId),
     queryFn: () => getAdjacentChapters(mangaId, chapterNumber, chapterId),
+    enabled: mangaId > 0,
     staleTime: Infinity,
   });
 }

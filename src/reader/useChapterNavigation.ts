@@ -27,6 +27,7 @@ export function useChapterNavigation({
   const queryClient = useQueryClient();
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastSavedPage = useRef(-1);
+  const pendingPage = useRef(-1);
 
   const { data: adjacent, isLoading } = useAdjacentChapters(
     mangaId,
@@ -34,20 +35,28 @@ export function useChapterNavigation({
     chapterId,
   );
 
-  // Record history on mount
+  // Record history on mount (guard against mangaId=0 before chapter data loads)
   useEffect(() => {
-    upsertHistory(chapterId, mangaId).catch(() => {});
+    if (mangaId > 0) {
+      upsertHistory(chapterId, mangaId).catch(() => {});
+    }
   }, [chapterId, mangaId]);
 
-  // Cleanup debounce timer
+  // Flush pending progress on unmount
   useEffect(() => {
     return () => {
       clearTimeout(debounceTimer.current);
+      if (pendingPage.current >= 0 && pendingPage.current !== lastSavedPage.current) {
+        saveReadingProgress(chapterId, pendingPage.current).catch(() => {});
+      }
     };
+    // chapterId is stable per mount (from route params)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveProgress = useCallback(
     (pageIndex: number) => {
+      pendingPage.current = pageIndex;
       clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
         if (pageIndex !== lastSavedPage.current) {

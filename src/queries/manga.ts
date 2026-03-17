@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ExtensionBridge from 'extension-bridge';
 import { getMangaById, getChaptersForManga } from '@db/queries/reader';
 import {
+  getLibraryManga,
+  getLibrarySourceUrls,
+  getLatestReadChapters,
   updateMangaDetails,
   upsertChaptersFromSource,
   toggleMangaInLibrary,
@@ -12,11 +15,19 @@ import type { Manga } from '@db/schema';
 
 export const mangaKeys = {
   all: ['manga'] as const,
+  library: () => [...mangaKeys.all, 'library'] as const,
   detail: (id: number) => [...mangaKeys.all, 'detail', id] as const,
   chapters: (mangaId: number) => [...mangaKeys.all, 'chapters', mangaId] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
+
+export function useLibraryManga() {
+  return useQuery<Manga[]>({
+    queryKey: mangaKeys.library(),
+    queryFn: getLibraryManga,
+  });
+}
 
 export function useMangaDetail(mangaId: number) {
   return useQuery<Manga | undefined>({
@@ -31,6 +42,22 @@ export function useMangaChapters(mangaId: number) {
     queryKey: mangaKeys.chapters(mangaId),
     queryFn: () => getChaptersForManga(mangaId),
     staleTime: Infinity,
+  });
+}
+
+export function useLibrarySourceUrls(sourceId: string) {
+  return useQuery<Set<string>>({
+    queryKey: [...mangaKeys.library(), 'sourceUrls', sourceId],
+    queryFn: () => getLibrarySourceUrls(sourceId),
+  });
+}
+
+export function useLatestReadChapters(mangaIds: number[]) {
+  return useQuery({
+    queryKey: [...mangaKeys.library(), 'latestRead', ...mangaIds],
+    queryFn: () => getLatestReadChapters(mangaIds),
+    enabled: mangaIds.length > 0,
+    staleTime: 0, // always refetch on tab switch so ribbons reflect latest reading
   });
 }
 
@@ -106,6 +133,7 @@ export function useToggleLibrary() {
     },
     onSuccess: (mangaId) => {
       queryClient.invalidateQueries({ queryKey: mangaKeys.detail(mangaId) });
+      queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
     },
   });
 }

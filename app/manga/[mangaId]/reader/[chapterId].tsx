@@ -69,7 +69,13 @@ export default function ReaderScreen() {
     totalPages,
   });
 
-  // Open chapter in store on mount
+  // Reset state immediately when chapterId route param changes
+  useEffect(() => {
+    setCurrentPage(0);
+    setTotalPages(0);
+  }, [numericChapterId]);
+
+  // Open chapter in store when data arrives
   useEffect(() => {
     if (chapter) {
       openChapter(chapter.id, chapter.mangaId);
@@ -150,7 +156,6 @@ export default function ReaderScreen() {
             pages={pages}
             currentPage={currentPage}
             initialPage={chapter.lastPageRead}
-            scaleType={scaleType}
             currentChapterName={chapter.name}
             prevChapter={prevChapter}
             nextChapter={nextChapter}

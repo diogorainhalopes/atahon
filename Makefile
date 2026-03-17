@@ -25,6 +25,10 @@ setup: ## Install deps, fix Expo versions, check Node and Java versions
 android: ## Build and run on Android (npx expo run:android)
 	npx expo run:android
 
+android-prod:
+	cd android && ./gradlew assembleRelease
+	adb install -r android/app/build/outputs/apk/release/app-release.apk
+
 # Build and launch on iOS simulator
 ios: ## Build and run on iOS simulator
 	npx expo run:ios
