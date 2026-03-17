@@ -1,6 +1,6 @@
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, or } from 'drizzle-orm';
 import { db } from '@db/client';
-import { manga, chapter, history, type Manga } from '@db/schema';
+import { manga, chapter, type Manga } from '@db/schema';
 import type { SChapter } from '@/types/extensions';
 
 export async function getLibraryManga(): Promise<Manga[]> {
@@ -78,18 +78,23 @@ export async function getLatestReadChapters(
 ): Promise<Record<number, { chapterNumber: number | null; name: string }>> {
   if (mangaIds.length === 0) return {};
 
+  // Get chapters with any reading progress, ordered by chapter number descending
   const rows = await db
     .select({
-      mangaId: history.mangaId,
+      mangaId: chapter.mangaId,
       chapterNumber: chapter.chapterNumber,
       name: chapter.name,
-      readAt: history.readAt,
     })
-    .from(history)
-    .innerJoin(chapter, eq(history.chapterId, chapter.id))
-    .where(inArray(history.mangaId, mangaIds))
-    .orderBy(desc(history.readAt));
+    .from(chapter)
+    .where(
+      and(
+        inArray(chapter.mangaId, mangaIds),
+        or(eq(chapter.read, true), gt(chapter.lastPageRead, 0)),
+      ),
+    )
+    .orderBy(desc(chapter.chapterNumber), desc(chapter.id));
 
+  // Pick the highest chapter per manga
   const result: Record<number, { chapterNumber: number | null; name: string }> = {};
   for (const row of rows) {
     if (!(row.mangaId in result)) {
@@ -97,6 +102,43 @@ export async function getLatestReadChapters(
     }
   }
   return result;
+}
+
+// ─── Updates (new chapters for library manga) ───────────────────────────────
+
+export interface UpdateEntry {
+  chapterId: number;
+  mangaId: number;
+  mangaTitle: string;
+  thumbnailUrl: string | null;
+  chapterName: string;
+  chapterNumber: number | null;
+  scanlator: string | null;
+  uploadDate: number | null;
+  read: boolean;
+  createdAt: number;
+}
+
+export async function getLibraryUpdates(): Promise<UpdateEntry[]> {
+  const rows = await db
+    .select({
+      chapterId: chapter.id,
+      mangaId: manga.id,
+      mangaTitle: manga.title,
+      thumbnailUrl: manga.thumbnailUrl,
+      chapterName: chapter.name,
+      chapterNumber: chapter.chapterNumber,
+      scanlator: chapter.scanlator,
+      uploadDate: chapter.uploadDate,
+      read: chapter.read,
+      createdAt: chapter.createdAt,
+    })
+    .from(chapter)
+    .innerJoin(manga, eq(chapter.mangaId, manga.id))
+    .where(eq(manga.inLibrary, true))
+    .orderBy(desc(chapter.uploadDate), desc(chapter.chapterNumber), desc(chapter.id));
+
+  return rows;
 }
 
 export async function upsertChaptersFromSource(

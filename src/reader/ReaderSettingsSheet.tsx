@@ -105,10 +105,12 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
     backgroundColor,
     keepScreenOn,
     showPageNumber,
+    connectPages,
     setReadingMode,
     setScaleType,
     setBackgroundColor,
     setKeepScreenOn,
+    setConnectPages,
   } = useReaderStore();
 
   return (
@@ -172,6 +174,18 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
                 thumbColor={showPageNumber ? colors.accent.DEFAULT : colors.text.muted}
               />
             </View>
+
+            {readingMode === 'webtoon' && (
+              <View style={styles.toggleRow}>
+                <Text style={styles.settingLabel}>Connect Pages</Text>
+                <Switch
+                  value={connectPages}
+                  onValueChange={setConnectPages}
+                  trackColor={{ false: colors.surface.DEFAULT, true: colors.accent.muted }}
+                  thumbColor={connectPages ? colors.accent.DEFAULT : colors.text.muted}
+                />
+              </View>
+            )}
           </ScrollView>
         </Pressable>
       </Pressable>

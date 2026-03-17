@@ -5,9 +5,11 @@ import {
   getLibraryManga,
   getLibrarySourceUrls,
   getLatestReadChapters,
+  getLibraryUpdates,
   updateMangaDetails,
   upsertChaptersFromSource,
   toggleMangaInLibrary,
+  type UpdateEntry,
 } from '@db/queries/manga';
 import type { Manga } from '@db/schema';
 
@@ -16,6 +18,7 @@ import type { Manga } from '@db/schema';
 export const mangaKeys = {
   all: ['manga'] as const,
   library: () => [...mangaKeys.all, 'library'] as const,
+  updates: () => [...mangaKeys.all, 'updates'] as const,
   detail: (id: number) => [...mangaKeys.all, 'detail', id] as const,
   chapters: (mangaId: number) => [...mangaKeys.all, 'chapters', mangaId] as const,
 };
@@ -58,6 +61,14 @@ export function useLatestReadChapters(mangaIds: number[]) {
     queryFn: () => getLatestReadChapters(mangaIds),
     enabled: mangaIds.length > 0,
     staleTime: 0, // always refetch on tab switch so ribbons reflect latest reading
+  });
+}
+
+export function useLibraryUpdates() {
+  return useQuery<UpdateEntry[]>({
+    queryKey: mangaKeys.updates(),
+    queryFn: getLibraryUpdates,
+    staleTime: 0,
   });
 }
 

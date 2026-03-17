@@ -65,6 +65,47 @@ export async function markChapterRead(chapterId: number): Promise<void> {
     .where(eq(chapter.id, chapterId));
 }
 
+// ─── History queries ─────────────────────────────────────────────────────────
+
+export interface HistoryEntry {
+  historyId: number;
+  readAt: number;
+  mangaId: number;
+  mangaTitle: string;
+  thumbnailUrl: string | null;
+  chapterId: number;
+  chapterName: string;
+  chapterNumber: number | null;
+}
+
+export async function getReadingHistory(): Promise<HistoryEntry[]> {
+  const rows = await db
+    .select({
+      historyId: history.id,
+      readAt: history.readAt,
+      mangaId: manga.id,
+      mangaTitle: manga.title,
+      thumbnailUrl: manga.thumbnailUrl,
+      chapterId: chapter.id,
+      chapterName: chapter.name,
+      chapterNumber: chapter.chapterNumber,
+    })
+    .from(history)
+    .innerJoin(chapter, eq(history.chapterId, chapter.id))
+    .innerJoin(manga, eq(history.mangaId, manga.id))
+    .orderBy(desc(history.readAt));
+
+  return rows;
+}
+
+export async function deleteHistoryEntry(historyId: number): Promise<void> {
+  await db.delete(history).where(eq(history.id, historyId));
+}
+
+export async function clearAllHistory(): Promise<void> {
+  await db.delete(history);
+}
+
 export async function upsertHistory(
   chapterId: number,
   mangaId: number,

@@ -20,11 +20,12 @@ const DOUBLE_TAP_SCALE = 2.5;
 
 interface ContinuousPageImageProps {
   page: ReaderPage;
+  connectPages?: boolean;
   onRetry: (index: number) => void;
   onTap?: () => void;
 }
 
-function ContinuousPageImageInner({ page, onRetry, onTap }: ContinuousPageImageProps) {
+function ContinuousPageImageInner({ page, connectPages, onRetry, onTap }: ContinuousPageImageProps) {
   const [displayHeight, setDisplayHeight] = useState(SCREEN_HEIGHT);
   const containerHeight = useSharedValue(SCREEN_HEIGHT);
 
@@ -185,7 +186,7 @@ function ContinuousPageImageInner({ page, onRetry, onTap }: ContinuousPageImageP
   }
 
   return (
-    <View style={{ width: SCREEN_WIDTH, height: displayHeight, overflow: 'visible' }}>
+    <View style={{ width: SCREEN_WIDTH, height: displayHeight, overflow: 'visible', marginBottom: connectPages ? -1 : 0 }}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={[{ width: SCREEN_WIDTH, height: displayHeight }, animatedStyle]}>
           <Image

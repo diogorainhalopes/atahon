@@ -34,6 +34,7 @@ export default function ReaderScreen() {
     fullscreen,
     showPageNumber,
     keepScreenOn,
+    connectPages,
     isOverlayVisible,
     openChapter,
     closeChapter,
@@ -163,6 +164,7 @@ export default function ReaderScreen() {
             onRetryPage={retryPage}
             onCenterTap={toggleOverlay}
             onChapterNavigate={navigateToChapter}
+            connectPages={connectPages}
           />
         ) : (
           <PagedViewer

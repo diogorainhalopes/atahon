@@ -23,6 +23,7 @@ interface ReaderSettings {
   keepScreenOn: boolean;
   showPageNumber: boolean;
   fullscreen: boolean;
+  connectPages: boolean;
 }
 
 interface ReaderState extends ReaderSession, ReaderSettings {
@@ -40,6 +41,7 @@ interface ReaderState extends ReaderSession, ReaderSettings {
   setPreloadCount: (n: number) => void;
   setBackgroundColor: (color: string) => void;
   setKeepScreenOn: (keep: boolean) => void;
+  setConnectPages: (connect: boolean) => void;
 }
 
 export const useReaderStore = create<ReaderState>()(
@@ -61,6 +63,7 @@ export const useReaderStore = create<ReaderState>()(
       keepScreenOn: true,
       showPageNumber: true,
       fullscreen: true,
+      connectPages: false,
 
       openChapter: (chapterId, mangaId) =>
         set({ chapterId, mangaId, currentPage: 0, totalPages: 0, isOverlayVisible: false }),
@@ -76,6 +79,7 @@ export const useReaderStore = create<ReaderState>()(
       setPreloadCount: (preloadCount) => set({ preloadCount }),
       setBackgroundColor: (backgroundColor) => set({ backgroundColor }),
       setKeepScreenOn: (keepScreenOn) => set({ keepScreenOn }),
+      setConnectPages: (connectPages) => set({ connectPages }),
     }),
     {
       name: 'atahon-reader',
@@ -90,6 +94,7 @@ export const useReaderStore = create<ReaderState>()(
         keepScreenOn: state.keepScreenOn,
         showPageNumber: state.showPageNumber,
         fullscreen: state.fullscreen,
+        connectPages: state.connectPages,
       }),
     },
   ),
