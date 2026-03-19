@@ -40,7 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
       libraryDisplayMode: 'grid',
       showUnreadBadges: true,
       libraryUpdateInterval: 12,
-      concurrentDownloads: 3,
+      concurrentDownloads: 6,
       downloadOnWifiOnly: false,
       defaultReadingMode: 'webtoon',
       defaultPreloadCount: 3,
