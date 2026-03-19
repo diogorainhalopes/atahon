@@ -106,6 +106,7 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
     keepScreenOn,
     showPageNumber,
     connectPages,
+    scrubberBlur,
     setReadingMode,
     setScaleType,
     setBackgroundColor,
@@ -172,6 +173,16 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
                 onValueChange={(v) => { useReaderStore.setState({ showPageNumber: v }); }}
                 trackColor={{ false: colors.surface.DEFAULT, true: colors.accent.muted }}
                 thumbColor={showPageNumber ? colors.accent.DEFAULT : colors.text.muted}
+              />
+            </View>
+
+            <View style={styles.toggleRow}>
+              <Text style={styles.settingLabel}>Blur Page Preview</Text>
+              <Switch
+                value={scrubberBlur}
+                onValueChange={(v) => { useReaderStore.setState({ scrubberBlur: v }); }}
+                trackColor={{ false: colors.surface.DEFAULT, true: colors.accent.muted }}
+                thumbColor={scrubberBlur ? colors.accent.DEFAULT : colors.text.muted}
               />
             </View>
 
