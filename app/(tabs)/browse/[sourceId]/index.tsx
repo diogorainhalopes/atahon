@@ -211,10 +211,30 @@ export default function SourceBrowseScreen() {
       {/* ── Error ────────────────────────────────────────────────────── */}
       {activeQuery.isError && !activeQuery.isLoading && (
         <View style={styles.center}>
-          <Text style={styles.errorText}>Failed to load manga</Text>
-          <Text style={styles.errorDetail} numberOfLines={4}>
-            {(activeQuery.error as Error)?.message}
-          </Text>
+          {(() => {
+            const errorMsg = (activeQuery.error as Error)?.message || '';
+            const isUnsupported = errorMsg.includes('Expected URL scheme') ||
+                                 errorMsg.includes('not found') ||
+                                 errorMsg.includes('configuration');
+
+            if (isUnsupported) {
+              return (
+                <>
+                  <Text style={styles.errorText}>Unsupported extension</Text>
+                  <Text style={styles.errorDetail}>This extension requires additional setup or configuration that is not supported at the moment.</Text>
+                </>
+              );
+            }
+
+            return (
+              <>
+                <Text style={styles.errorText}>Failed to load manga</Text>
+                <Text style={styles.errorDetail} numberOfLines={4}>
+                  {errorMsg}
+                </Text>
+              </>
+            );
+          })()}
           <TouchableOpacity onPress={() => activeQuery.refetch()} style={styles.retryBtn}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
