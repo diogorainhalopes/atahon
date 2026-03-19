@@ -115,15 +115,17 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
   } = useReaderStore();
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <View style={styles.handle} />
+    <>
+      {visible && <Pressable style={styles.backdropFixed} onPress={onClose} />}
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent
+        onRequestClose={onClose}
+      >
+        <Pressable style={styles.sheetContainer} onPress={onClose}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <View style={styles.handle} />
           <Text style={styles.sheetTitle}>Reader Settings</Text>
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -198,9 +200,10 @@ export function ReaderSettingsSheet({ visible, onClose }: ReaderSettingsSheetPro
               </View>
             )}
           </ScrollView>
+          </Pressable>
         </Pressable>
-      </Pressable>
-    </Modal>
+      </Modal>
+    </>
   );
 }
 
@@ -211,6 +214,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  backdropFixed: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 999,
+  },
+  sheetContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: colors.background.elevated,
