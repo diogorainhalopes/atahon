@@ -49,12 +49,16 @@ export default function ReaderScreen() {
   // Fetch chapter + manga data from DB
   const { data: chapter, isLoading: chapterLoading } = useChapterData(numericChapterId);
 
-  // Fetch pages from extension
-  const { pages, totalPages, isLoading: pagesLoading, error, retryPage } = usePageLoader(
+  // Fetch pages from extension (or local storage if downloaded)
+  // Parse mangaId from route params as fallback if chapter data not yet loaded
+  const numericMangaId = parseInt(mangaId, 10);
+  const { pages, totalPages, isLoading: pagesLoading, error, retryPage, markPageError, isOfflineChecking } = usePageLoader(
     chapter?.sourceId ?? '',
     chapter?.sourceUrl ?? '',
     currentPage,
     preloadCount,
+    chapter?.mangaId ?? numericMangaId,
+    numericChapterId,
   );
 
   // Chapter navigation (progress saving, adjacent chapters)
@@ -109,7 +113,7 @@ export default function ReaderScreen() {
     (page: number) => {
       if (readingMode === 'webtoon') {
         // +1 for prev transition item
-        webtoonRef.current?.scrollToIndex({ index: page + 1, animated: false });
+        webtoonRef.current?.scrollToIndex({ index: page + 1, animated: true });
       } else {
         // +1 for prev transition page in PagerView
         pagerRef.current?.setPage(page + 1);
@@ -120,7 +124,7 @@ export default function ReaderScreen() {
   );
 
   // Loading state
-  if (chapterLoading || (pagesLoading && pages.length === 0)) {
+  if (chapterLoading || isOfflineChecking || (pagesLoading && pages.length === 0)) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
@@ -162,6 +166,7 @@ export default function ReaderScreen() {
             nextChapter={nextChapter}
             onPageChange={handlePageChange}
             onRetryPage={retryPage}
+            onImageError={markPageError}
             onCenterTap={toggleOverlay}
             onChapterNavigate={navigateToChapter}
             connectPages={connectPages}
@@ -179,6 +184,7 @@ export default function ReaderScreen() {
             nextChapter={nextChapter}
             onPageChange={handlePageChange}
             onRetryPage={retryPage}
+            onImageError={markPageError}
             onCenterTap={toggleOverlay}
             onChapterNavigate={navigateToChapter}
           />
@@ -198,6 +204,7 @@ export default function ReaderScreen() {
           mangaTitle=""
           currentPage={currentPage}
           totalPages={totalPages}
+          pages={pages}
           onSeekPage={handleSeekPage}
         />
       </View>

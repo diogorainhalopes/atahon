@@ -20,6 +20,12 @@ import {
   BookmarkPlus,
   BookmarkCheck,
   RefreshCw,
+  Download,
+  Clock,
+  Loader,
+  CheckCircle,
+  AlertCircle,
+  HardDrive,
 } from 'lucide-react-native';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
@@ -32,6 +38,8 @@ import {
   useFetchChapterList,
   useToggleLibrary,
 } from '@queries/manga';
+import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
+import { useDownloadStore } from '@stores/downloadStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 280;
@@ -65,10 +73,13 @@ function formatDate(timestamp: number | null): string {
 interface ChapterRowProps {
   chapter: Chapter;
   mangaId: string;
+  mangaTitle: string;
+  sourceId: string;
   onPress: () => void;
+  onDownload: () => void;
 }
 
-function ChapterRow({ chapter, onPress }: ChapterRowProps) {
+function ChapterRow({ chapter, onPress, onDownload, mangaTitle, sourceId }: ChapterRowProps) {
   const chapterLabel =
     chapter.chapterNumber != null && chapter.chapterNumber > 0
       ? `Chapter ${chapter.chapterNumber}`
@@ -78,6 +89,37 @@ function ChapterRow({ chapter, onPress }: ChapterRowProps) {
       ? `${chapterLabel} — ${chapter.name}`
       : chapterLabel
     : chapter.name;
+
+  // Get live download progress from store
+  const downloadItem = useDownloadStore((s) =>
+    s.queue.find((item) => item.chapterId === chapter.id),
+  );
+
+  const getDownloadIcon = () => {
+    const status = chapter.downloadStatus;
+    const progress = downloadItem?.progress ?? 0;
+
+    if (status === 3) {
+      // Done
+      return <HardDrive size={18} color={colors.status.success} />;
+    } else if (status === 4) {
+      // Error
+      return <AlertCircle size={18} color={colors.status.error} />;
+    } else if (status === 2 || downloadItem?.status === 'downloading') {
+      // Downloading - show progress
+      return (
+        <View style={styles.downloadProgressContainer}>
+          <Loader size={16} color={colors.accent.DEFAULT} />
+          <Text style={styles.downloadProgress}>{Math.round(progress * 100)}%</Text>
+        </View>
+      );
+    } else if (status === 1 || downloadItem?.status === 'queued') {
+      // Queued
+      return <Clock size={18} color={colors.text.muted} />;
+    }
+    // None (0)
+    return <Download size={18} color={colors.text.muted} />;
+  };
 
   return (
     <TouchableOpacity style={styles.chapterRow} onPress={onPress} activeOpacity={0.7}>
@@ -100,9 +142,15 @@ function ChapterRow({ chapter, onPress }: ChapterRowProps) {
           ) : null}
         </View>
       </View>
-      {chapter.bookmark && (
-        <View style={styles.bookmarkDot} />
-      )}
+      {chapter.bookmark && <View style={styles.bookmarkDot} />}
+      <TouchableOpacity
+        onPress={onDownload}
+        hitSlop={8}
+        activeOpacity={0.7}
+        style={styles.downloadButton}
+      >
+        {getDownloadIcon()}
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
@@ -123,6 +171,8 @@ export default function MangaDetailScreen() {
   const fetchDetails = useFetchMangaDetails();
   const fetchChapters = useFetchChapterList();
   const toggleLibrary = useToggleLibrary();
+  const enqueueDownload = useEnqueueDownload();
+  const bulkEnqueueDownload = useBulkEnqueueDownload();
 
   // UI state
   const [sortAsc, setSortAsc] = useState(false);
@@ -162,6 +212,56 @@ export default function MangaDetailScreen() {
     fetchDetails.mutate(params);
     fetchChapters.mutate(params);
   }, [manga, isRefreshing]);
+
+  // Download handlers
+  const handleDownloadChapter = useCallback(
+    (chapter: Chapter) => {
+      if (!manga) return;
+      enqueueDownload.mutate({
+        chapterId: chapter.id,
+        mangaId: manga.id,
+        mangaTitle: manga.title,
+        chapterName: chapter.name,
+        sourceId: manga.sourceId,
+        chapterUrl: chapter.sourceUrl,
+      });
+    },
+    [manga, enqueueDownload],
+  );
+
+  const handleDownloadAll = useCallback(() => {
+    if (!manga || !chapters) return;
+    const toDownload = chapters
+      .filter((ch) => ch.downloadStatus === 0) // Not yet queued/downloaded
+      .map((ch) => ({
+        chapterId: ch.id,
+        mangaId: manga.id,
+        mangaTitle: manga.title,
+        chapterName: ch.name,
+        sourceId: manga.sourceId,
+        chapterUrl: ch.sourceUrl,
+      }));
+    if (toDownload.length > 0) {
+      bulkEnqueueDownload.mutate(toDownload);
+    }
+  }, [manga, chapters, bulkEnqueueDownload]);
+
+  const handleDownloadNew = useCallback(() => {
+    if (!manga || !chapters) return;
+    const toDownload = chapters
+      .filter((ch) => ch.downloadStatus === 0)
+      .map((ch) => ({
+        chapterId: ch.id,
+        mangaId: manga.id,
+        mangaTitle: manga.title,
+        chapterName: ch.name,
+        sourceId: manga.sourceId,
+        chapterUrl: ch.sourceUrl,
+      }));
+    if (toDownload.length > 0) {
+      bulkEnqueueDownload.mutate(toDownload);
+    }
+  }, [manga, chapters, bulkEnqueueDownload]);
 
   // Parse genres
   const genres = useMemo(() => {
@@ -313,6 +413,21 @@ export default function MangaDetailScreen() {
             {chapters?.length ?? 0} Chapters
           </Text>
           <View style={styles.chapterActions}>
+            {chapters && chapters.length > 0 && chapters.some((ch) => ch.downloadStatus === 0) && (
+              <>
+                <TouchableOpacity
+                  onPress={handleDownloadAll}
+                  activeOpacity={0.7}
+                  hitSlop={8}
+                  disabled={bulkEnqueueDownload.isPending}
+                >
+                  <Download
+                    size={18}
+                    color={bulkEnqueueDownload.isPending ? colors.text.muted : colors.text.secondary}
+                  />
+                </TouchableOpacity>
+              </>
+            )}
             {manga.initialized && (
               <TouchableOpacity
                 onPress={handleRefresh}
@@ -321,7 +436,7 @@ export default function MangaDetailScreen() {
                 hitSlop={8}
               >
                 <RefreshCw
-                  size={18}
+                  size={isRefreshing ? 18 : 18}
                   color={isRefreshing ? colors.text.muted : colors.text.secondary}
                 />
               </TouchableOpacity>
@@ -348,13 +463,17 @@ export default function MangaDetailScreen() {
   }, [
     manga,
     chapters?.length,
+    chapters,
     descExpanded,
     genres,
     sortAsc,
     status,
     isRefreshing,
     handleRefresh,
+    handleDownloadAll,
+    handleDownloadNew,
     fetchChapters.isPending,
+    bulkEnqueueDownload.isPending,
   ]);
 
   // ─── Render ─────────────────────────────────────────────────────────
@@ -364,15 +483,18 @@ export default function MangaDetailScreen() {
       <ChapterRow
         chapter={item}
         mangaId={mangaId}
+        mangaTitle={manga?.title ?? ''}
+        sourceId={manga?.sourceId ?? ''}
         onPress={() =>
           router.push({
             pathname: '/manga/[mangaId]/reader/[chapterId]',
             params: { mangaId, chapterId: item.id },
           })
         }
+        onDownload={() => handleDownloadChapter(item)}
       />
     ),
-    [mangaId, router],
+    [mangaId, manga?.title, manga?.sourceId, router, handleDownloadChapter],
   );
 
   // Loading state
@@ -632,5 +754,18 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.accent.DEFAULT,
+  },
+  downloadButton: {
+    padding: spacing[1],
+  },
+  downloadProgressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[0.5],
+  },
+  downloadProgress: {
+    fontSize: typography.sizes.xs,
+    color: colors.accent.DEFAULT,
+    fontWeight: typography.weights.medium,
   },
 });

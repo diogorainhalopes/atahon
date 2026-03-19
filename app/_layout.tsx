@@ -9,8 +9,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { runMigrations } from '@db/client';
+import { restoreQueueOnStartup } from '@db/queries/downloads';
 import ExtensionBridge from 'extension-bridge';
 import { Logger } from '@utils/logger';
+import { startWorker, stopWorker } from '@utils/downloadWorker';
+import { useDownloadStore } from '@stores/downloadStore';
 
 // Prevent splash from auto hiding
 SplashScreen.preventAutoHideAsync();
@@ -34,6 +37,23 @@ export default function RootLayout() {
 
         await ExtensionBridge.loadInstalledExtensions();
 
+        // Restore download queue from DB and start worker
+        const queueItems = await restoreQueueOnStartup();
+        if (queueItems.length > 0) {
+          Logger.debug('Boot', `Restoring ${queueItems.length} downloads from queue`);
+          for (const item of queueItems) {
+            useDownloadStore.getState().enqueue({
+              id: item.chapterId,
+              chapterId: item.chapterId,
+              mangaId: item.mangaId,
+              mangaTitle: item.mangaTitle,
+              chapterName: item.chapterName,
+              sourceId: item.sourceId,
+              chapterUrl: item.chapterUrl,
+            });
+          }
+          startWorker();
+        }
       } catch (e) {
         Logger.error('Boot', 'Prepare failed:', e);
       } finally {
@@ -43,6 +63,11 @@ export default function RootLayout() {
     }
   
     prepare();
+
+    // Cleanup: stop worker on unmount
+    return () => {
+      stopWorker();
+    };
   }, []);
 
   if (!ready) return null;
