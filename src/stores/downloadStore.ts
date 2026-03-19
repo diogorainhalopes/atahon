@@ -8,6 +8,8 @@ export interface DownloadItem {
   mangaId: number;
   mangaTitle: string;
   chapterName: string;
+  sourceId: string;
+  chapterUrl: string;
   status: DownloadStatus;
   progress: number; // 0–1
   error?: string;
@@ -31,26 +33,40 @@ export const useDownloadStore = create<DownloadState>((set) => ({
   isRunning: false,
 
   enqueue: (item) =>
-    set((s) => ({
-      queue: s.queue.some((q) => q.chapterId === item.chapterId)
-        ? s.queue
-        : [
-            ...s.queue,
-            { ...item, status: 'queued', progress: 0, addedAt: Date.now() },
-          ],
-    })),
+    set((s) => {
+      const alreadyExists = s.queue.some((q) => q.chapterId === item.chapterId);
+      if (alreadyExists) {
+        console.log(`[DownloadStore] ⚠️ Chapter ${item.chapterId} already in queue`);
+        return s;
+      }
+      const newItem: DownloadItem = {
+        ...item,
+        status: 'queued' as const,
+        progress: 0,
+        addedAt: Date.now(),
+      };
+      const newQueue = [...s.queue, newItem];
+      console.log(`[DownloadStore] ➕ Chapter ${item.chapterId} enqueued (total: ${newQueue.length})`);
+      return { queue: newQueue };
+    }),
 
   updateProgress: (chapterId, progress) =>
-    set((s) => ({
-      queue: s.queue.map((q) => (q.chapterId === chapterId ? { ...q, progress } : q)),
-    })),
+    set((s) => {
+      console.log(`[DownloadStore] 📊 Chapter ${chapterId} progress: ${Math.round(progress * 100)}%`);
+      return {
+        queue: s.queue.map((q) => (q.chapterId === chapterId ? { ...q, progress } : q)),
+      };
+    }),
 
   updateStatus: (chapterId, status, error) =>
-    set((s) => ({
-      queue: s.queue.map((q) =>
-        q.chapterId === chapterId ? { ...q, status, error } : q,
-      ),
-    })),
+    set((s) => {
+      console.log(`[DownloadStore] 🔄 Chapter ${chapterId} status: ${status}${error ? ` (${error})` : ''}`);
+      return {
+        queue: s.queue.map((q) =>
+          q.chapterId === chapterId ? { ...q, status, error } : q,
+        ),
+      };
+    }),
 
   remove: (chapterId) =>
     set((s) => ({ queue: s.queue.filter((q) => q.chapterId !== chapterId) })),
