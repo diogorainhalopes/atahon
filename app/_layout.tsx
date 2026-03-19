@@ -81,6 +81,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="extensions" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="downloads" options={{ animation: 'slide_from_right' }} />
 
             <Stack.Screen
               name="manga/[mangaId]/index"

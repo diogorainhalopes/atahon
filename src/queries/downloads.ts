@@ -226,3 +226,26 @@ export function useClearCompletedDownloads() {
     },
   });
 }
+
+/**
+ * Delete all downloaded chapters for a specific manga.
+ */
+export function useDeleteMangaDownloads() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ mangaId, chapterIds }: { mangaId: number; chapterIds: number[] }) => {
+      for (const chapterId of chapterIds) {
+        await deleteChapterFiles(mangaId, chapterId);
+        await deleteDownloadEntry(chapterId);
+        useDownloadStore.getState().remove(chapterId);
+      }
+      return { mangaId };
+    },
+    onSuccess: ({ mangaId }) => {
+      queryClient.invalidateQueries({ queryKey: downloadKeys.active() });
+      queryClient.invalidateQueries({ queryKey: downloadKeys.completed() });
+      queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+    },
+  });
+}

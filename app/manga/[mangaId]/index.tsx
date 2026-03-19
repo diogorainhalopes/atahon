@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes['2xl'],
     fontWeight: typography.weights.bold,
     color: colors.text.primary,
-    lineHeight: typography.sizes['2xl'] * typography.lineHeights.snug,
+    lineHeight: typography.lineHeights.snug,
   },
   authorArtist: {
     fontSize: typography.sizes.sm,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
-    lineHeight: typography.sizes.sm * typography.lineHeights.relaxed,
+    lineHeight: typography.lineHeights.relaxed,
   },
   expandHint: {
     fontSize: typography.sizes.sm,

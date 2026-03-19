@@ -32,10 +32,10 @@ export const typography = {
     extrabold: '800' as const,
   },
   lineHeights: {
-    tight: 1.2,
-    snug: 1.35,
-    normal: 1.5,
-    relaxed: 1.65,
+    tight: 19,
+    snug: 22,
+    normal: 24,
+    relaxed: 26,
   },
   letterSpacing: {
     tight: -0.5,
