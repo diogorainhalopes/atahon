@@ -28,9 +28,10 @@ interface ZoomableImageProps {
   scaleType: ScaleType;
   onTapZone: (zone: TapZone) => void;
   onLongPress?: () => void;
+  onError?: () => void;
 }
 
-function ZoomableImageInner({ uri, scaleType, onTapZone, onLongPress }: ZoomableImageProps) {
+function ZoomableImageInner({ uri, scaleType, onTapZone, onLongPress, onError }: ZoomableImageProps) {
   const scale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -77,6 +78,7 @@ function ZoomableImageInner({ uri, scaleType, onTapZone, onLongPress }: Zoomable
           style={styles.image}
           contentFit={mapContentFit(scaleType)}
           transition={{ duration: 150 }}
+          onError={onError}
         />
       </Animated.View>
     </GestureDetector>

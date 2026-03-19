@@ -4,29 +4,98 @@ import ExtensionBridge from 'extension-bridge';
 import type { Page } from '@/types/extensions';
 import type { ReaderPage } from './types';
 import { usePageList } from '@queries/reader';
+import { readChapterIndex, pagePath } from '@utils/downloadPaths';
 
 export function usePageLoader(
   sourceId: string,
   chapterUrl: string,
   currentPage: number,
   preloadCount: number,
+  mangaId?: number,
+  chapterId?: number,
 ) {
-  const { data: rawPages, isLoading, error } = usePageList(sourceId, chapterUrl, !!sourceId);
+  const [isLocallyLoaded, setIsLocallyLoaded] = useState(false);
+  const [enableNetworkQuery, setEnableNetworkQuery] = useState(false);
+  const [isOfflineChecking, setIsOfflineChecking] = useState(!!(mangaId && chapterId));
+
+  const { data: rawPages, isLoading, error } = usePageList(sourceId, chapterUrl, enableNetworkQuery);
 
   const pagesRef = useRef<Map<number, ReaderPage>>(new Map());
   const [renderKey, setRenderKey] = useState(0);
   const resolvingRef = useRef<Set<number>>(new Set());
 
+  // Check for offline (locally downloaded) chapter on chapter change
+  useEffect(() => {
+    if (!mangaId || !chapterId) {
+      setEnableNetworkQuery(true);
+      setIsLocallyLoaded(false);
+      setIsOfflineChecking(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const checkOffline = async () => {
+      try {
+        // Try to read the pages.json directly (single filesystem call)
+        const index = await readChapterIndex(mangaId, chapterId);
+        if (!isMounted) return;
+
+        if (index) {
+          // Load from local storage
+          const map = new Map<number, ReaderPage>();
+          for (const page of index.pages) {
+            const localPath = pagePath(mangaId, chapterId, page.index);
+            map.set(page.index, {
+              index: page.index,
+              url: page.url, // Preserve original URL for network fallback if local load fails
+              imageUrl: localPath, // pagePath already includes file:// prefix
+              state: 'ready',
+            });
+          }
+          pagesRef.current = map;
+          setIsLocallyLoaded(true);
+          setEnableNetworkQuery(false);
+          setRenderKey((k) => k + 1);
+        } else {
+          // Not downloaded locally, enable network query
+          setIsLocallyLoaded(false);
+          setEnableNetworkQuery(true);
+        }
+      } catch (e) {
+        // Error reading index, fall back to network
+        if (isMounted) {
+          setIsLocallyLoaded(false);
+          setEnableNetworkQuery(true);
+        }
+      } finally {
+        if (isMounted) {
+          setIsOfflineChecking(false);
+        }
+      }
+    };
+
+    checkOffline();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mangaId, chapterId]);
+
   // Clear state when chapter changes
   useEffect(() => {
+    if (isLocallyLoaded) {
+      // Don't clear local pages when switching chapters
+      return;
+    }
     pagesRef.current = new Map();
     resolvingRef.current.clear();
     setRenderKey((k) => k + 1);
-  }, [chapterUrl]);
+  }, [chapterUrl, isLocallyLoaded]);
 
-  // Initialize page map when raw pages arrive
+  // Initialize page map when raw pages arrive (skip if loaded locally)
   useEffect(() => {
-    if (!rawPages) return;
+    if (!rawPages || isLocallyLoaded) return;
 
     const map = new Map<number, ReaderPage>();
     for (const p of rawPages) {
@@ -52,7 +121,7 @@ export function usePageLoader(
         Image.prefetch(p.imageUrl).catch(() => {});
       }
     }
-  }, [rawPages]);
+  }, [rawPages, isLocallyLoaded]);
 
   // Resolve URLs and prefetch when currentPage changes
   useEffect(() => {
@@ -127,6 +196,20 @@ export function usePageLoader(
     }
   }
 
+  const markPageError = useCallback((index: number) => {
+    const page = pagesRef.current.get(index);
+    if (!page) return;
+    // Clear imageUrl so retry goes to network, mark as error
+    pagesRef.current.set(index, {
+      ...page,
+      imageUrl: undefined,
+      state: 'error',
+      error: 'Image failed to load. Retry to fetch from network.',
+    });
+    resolvingRef.current.delete(index);
+    setRenderKey((k) => k + 1);
+  }, []);
+
   const retryPage = useCallback((index: number) => {
     const page = pagesRef.current.get(index);
     if (!page) return;
@@ -137,7 +220,10 @@ export function usePageLoader(
   }, [sourceId]);
 
   // Build pages array from map for consumers
-  const totalPages = rawPages?.length ?? 0;
+  // If loaded locally, use the map size; otherwise use rawPages length
+  const totalPages = isLocallyLoaded
+    ? pagesRef.current.size
+    : (rawPages?.length ?? 0);
   const pages: ReaderPage[] = [];
   for (let i = 0; i < totalPages; i++) {
     pages.push(pagesRef.current.get(i) ?? { index: i, state: 'queue' });
@@ -149,5 +235,7 @@ export function usePageLoader(
     isLoading,
     error: error as Error | null,
     retryPage,
+    markPageError,
+    isOfflineChecking,
   };
 }

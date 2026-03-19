@@ -22,10 +22,11 @@ interface ContinuousPageImageProps {
   page: ReaderPage;
   connectPages?: boolean;
   onRetry: (index: number) => void;
+  onImageError: (index: number) => void;
   onTap?: () => void;
 }
 
-function ContinuousPageImageInner({ page, connectPages, onRetry, onTap }: ContinuousPageImageProps) {
+function ContinuousPageImageInner({ page, connectPages, onRetry, onImageError, onTap }: ContinuousPageImageProps) {
   const [displayHeight, setDisplayHeight] = useState(SCREEN_HEIGHT);
   const containerHeight = useSharedValue(SCREEN_HEIGHT);
 
@@ -186,7 +187,7 @@ function ContinuousPageImageInner({ page, connectPages, onRetry, onTap }: Contin
   }
 
   return (
-    <View style={{ width: SCREEN_WIDTH, height: displayHeight, overflow: 'visible', marginBottom: connectPages ? -1 : 0 }}>
+    <View style={{ width: SCREEN_WIDTH, height: displayHeight, overflow: 'visible', marginBottom: connectPages ? -1 : 16 }}>
       <GestureDetector gesture={gesture}>
         <Animated.View style={[{ width: SCREEN_WIDTH, height: displayHeight }, animatedStyle]}>
           <Image
@@ -194,6 +195,7 @@ function ContinuousPageImageInner({ page, connectPages, onRetry, onTap }: Contin
             style={{ width: SCREEN_WIDTH, height: displayHeight }}
             contentFit="contain"
             onLoad={handleLoad}
+            onError={() => onImageError(page.index)}
             transition={{ duration: 150 }}
           />
         </Animated.View>

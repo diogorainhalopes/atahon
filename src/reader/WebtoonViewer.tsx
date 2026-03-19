@@ -21,6 +21,7 @@ interface WebtoonViewerProps {
   nextChapter: Chapter | null;
   onPageChange: (page: number) => void;
   onRetryPage: (index: number) => void;
+  onImageError: (index: number) => void;
   onCenterTap?: () => void;
   onChapterNavigate: (chapterId: number) => void;
   connectPages?: boolean;
@@ -35,6 +36,7 @@ export const WebtoonViewer = forwardRef<FlashListRef<any>, WebtoonViewerProps>(f
     nextChapter,
     onPageChange,
     onRetryPage,
+    onImageError,
     onCenterTap,
     onChapterNavigate,
     connectPages,
@@ -78,11 +80,12 @@ export const WebtoonViewer = forwardRef<FlashListRef<any>, WebtoonViewerProps>(f
           page={item.page}
           connectPages={connectPages}
           onRetry={onRetryPage}
+          onImageError={onImageError}
           onTap={onCenterTap}
         />
       );
     },
-    [currentChapterName, prevChapter, nextChapter, onRetryPage, onCenterTap, onChapterNavigate, connectPages],
+    [currentChapterName, prevChapter, nextChapter, onRetryPage, onImageError, onCenterTap, onChapterNavigate, connectPages],
   );
 
   const onViewableItemsChanged = useCallback(
