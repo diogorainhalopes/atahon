@@ -24,6 +24,7 @@ interface ReaderSettings {
   showPageNumber: boolean;
   fullscreen: boolean;
   connectPages: boolean;
+  scrubberBlur: boolean;
 }
 
 interface ReaderState extends ReaderSession, ReaderSettings {
@@ -64,6 +65,7 @@ export const useReaderStore = create<ReaderState>()(
       showPageNumber: true,
       fullscreen: true,
       connectPages: false,
+      scrubberBlur: true,
 
       openChapter: (chapterId, mangaId) =>
         set({ chapterId, mangaId, currentPage: 0, totalPages: 0, isOverlayVisible: false }),
@@ -95,6 +97,7 @@ export const useReaderStore = create<ReaderState>()(
         showPageNumber: state.showPageNumber,
         fullscreen: state.fullscreen,
         connectPages: state.connectPages,
+        scrubberBlur: state.scrubberBlur,
       }),
     },
   ),
