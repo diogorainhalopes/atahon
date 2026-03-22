@@ -23,6 +23,7 @@ export const manga = sqliteTable('manga', {
   libraryAddedAt: integer('library_added_at'), // unix timestamp
   lastUpdatedAt: integer('last_updated_at'),
   initialized: integer('initialized', { mode: 'boolean' }).notNull().default(false),
+  smartDownloads: integer('smart_downloads', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at').notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer('updated_at').notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });

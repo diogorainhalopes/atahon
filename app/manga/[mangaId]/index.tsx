@@ -29,6 +29,7 @@ import {
   CheckCircle,
   AlertCircle,
   HardDrive,
+  Zap,
 } from 'lucide-react-native';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
@@ -40,6 +41,7 @@ import {
   useFetchMangaDetails,
   useFetchChapterList,
   useToggleLibrary,
+  useToggleSmartDownloads,
 } from '@queries/manga';
 import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
 import { useDownloadStore } from '@stores/downloadStore';
@@ -175,6 +177,7 @@ export default function MangaDetailScreen() {
   const fetchDetails = useFetchMangaDetails();
   const fetchChapters = useFetchChapterList();
   const toggleLibrary = useToggleLibrary();
+  const toggleSmartDownloads = useToggleSmartDownloads();
   const enqueueDownload = useEnqueueDownload();
   const bulkEnqueueDownload = useBulkEnqueueDownload();
 
@@ -200,10 +203,12 @@ export default function MangaDetailScreen() {
       mangaId: manga.id,
       sourceId: manga.sourceId,
       mangaUrl: manga.sourceUrl,
+      mangaTitle: manga.title,
+      smartDownloads: manga.smartDownloads,
     };
     fetchDetails.mutate(params);
     fetchChapters.mutate(params);
-  }, [manga?.id, manga?.initialized]);
+  }, [manga?.id, manga?.initialized, manga?.smartDownloads, manga?.title]);
 
   // Sorted chapters
   const sortedChapters = useMemo(() => {
@@ -220,6 +225,8 @@ export default function MangaDetailScreen() {
       mangaId: manga.id,
       sourceId: manga.sourceId,
       mangaUrl: manga.sourceUrl,
+      mangaTitle: manga.title,
+      smartDownloads: manga.smartDownloads,
     };
     fetchDetails.mutate(params);
     fetchChapters.mutate(params);
@@ -440,6 +447,32 @@ export default function MangaDetailScreen() {
                 ]}
               >
                 {manga.inLibrary ? 'In Library' : 'Add to Library'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.smartDlBtn,
+                manga.smartDownloads && styles.smartDlBtnActive,
+              ]}
+              onPress={() =>
+                toggleSmartDownloads.mutate({
+                  mangaId: manga.id,
+                  enabled: !manga.smartDownloads,
+                })
+              }
+              activeOpacity={0.7}
+            >
+              <Zap
+                size={16}
+                color={manga.smartDownloads ? colors.accent.DEFAULT : colors.text.muted}
+              />
+              <Text
+                style={[
+                  styles.smartDlText,
+                  manga.smartDownloads && styles.smartDlTextActive,
+                ]}
+              >
+                Smart Download
               </Text>
             </TouchableOpacity>
           </View>
@@ -748,7 +781,7 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border.DEFAULT,
   },
@@ -911,6 +944,30 @@ const styles = StyleSheet.create({
   wifiConfirmText: {
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.semibold,
+    color: colors.accent.DEFAULT,
+  },
+
+  // Smart Downloads button
+  smartDlBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+  },
+  smartDlBtnActive: {
+    borderColor: colors.accent.DEFAULT,
+    backgroundColor: colors.accent.muted,
+  },
+  smartDlText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.text.muted,
+  },
+  smartDlTextActive: {
     color: colors.accent.DEFAULT,
   },
 });

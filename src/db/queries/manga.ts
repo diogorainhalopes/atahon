@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, inArray, or } from 'drizzle-orm';
 import { db } from '@db/client';
-import { manga, chapter, type Manga } from '@db/schema';
+import { manga, chapter, type Manga, type Chapter } from '@db/schema';
 import type { SChapter } from '@/types/extensions';
 
 export async function getLibraryManga(): Promise<Manga[]> {
@@ -63,6 +63,16 @@ export async function toggleMangaInLibrary(
       updatedAt: Math.floor(Date.now() / 1000),
     })
     .where(eq(manga.id, id));
+}
+
+export async function setMangaSmartDownloads(
+  mangaId: number,
+  enabled: boolean,
+): Promise<void> {
+  await db
+    .update(manga)
+    .set({ smartDownloads: enabled })
+    .where(eq(manga.id, mangaId));
 }
 
 export async function getLibrarySourceUrls(sourceId: string): Promise<Set<string>> {
@@ -144,7 +154,14 @@ export async function getLibraryUpdates(): Promise<UpdateEntry[]> {
 export async function upsertChaptersFromSource(
   mangaId: number,
   chapters: SChapter[],
-): Promise<void> {
+): Promise<Chapter[]> {
+  // Snapshot existing sourceUrls
+  const existing = await db
+    .select({ sourceUrl: chapter.sourceUrl })
+    .from(chapter)
+    .where(eq(chapter.mangaId, mangaId));
+  const existingUrls = new Set(existing.map((r) => r.sourceUrl));
+
   const BATCH_SIZE = 50;
 
   for (let i = 0; i < chapters.length; i += BATCH_SIZE) {
@@ -173,4 +190,12 @@ export async function upsertChaptersFromSource(
         },
       });
   }
+
+  // Return newly inserted chapters
+  const newUrls = chapters.map((c) => c.url).filter((url) => !existingUrls.has(url));
+  if (newUrls.length === 0) return [];
+  return db
+    .select()
+    .from(chapter)
+    .where(and(eq(chapter.mangaId, mangaId), inArray(chapter.sourceUrl, newUrls)));
 }

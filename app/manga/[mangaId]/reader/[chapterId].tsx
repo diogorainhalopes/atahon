@@ -8,6 +8,7 @@ import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useReaderStore } from '@stores/readerStore';
 import { useChapterData } from '@queries/reader';
+import { useMangaDetail } from '@queries/manga';
 import { usePageLoader } from '@reader/usePageLoader';
 import { useChapterNavigation } from '@reader/useChapterNavigation';
 import { PagedViewer } from '@reader/PagedViewer';
@@ -52,6 +53,7 @@ export default function ReaderScreen() {
   // Fetch pages from extension (or local storage if downloaded)
   // Parse mangaId from route params as fallback if chapter data not yet loaded
   const numericMangaId = parseInt(mangaId, 10);
+  const { data: manga } = useMangaDetail(chapter?.mangaId ?? numericMangaId);
   const { pages, totalPages, isLoading: pagesLoading, error, retryPage, markPageError, isOfflineChecking } = usePageLoader(
     chapter?.sourceId ?? '',
     chapter?.sourceUrl ?? '',
@@ -72,6 +74,7 @@ export default function ReaderScreen() {
     mangaId: chapter?.mangaId ?? 0,
     chapterNumber: chapter?.chapterNumber ?? null,
     totalPages,
+    smartDownloads: manga?.smartDownloads ?? false,
   });
 
   // Reset state immediately when chapterId route param changes

@@ -2,11 +2,14 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdjacentChapters, readerKeys } from '@queries/reader';
+import { mangaKeys } from '@queries/manga';
 import {
   saveReadingProgress,
   markChapterRead,
   upsertHistory,
 } from '@db/queries/reader';
+import { deleteDownloadEntry } from '@db/queries/downloads';
+import { deleteChapterFiles } from '@utils/downloadPaths';
 
 const DEBOUNCE_MS = 2000;
 
@@ -15,6 +18,7 @@ interface UseChapterNavigationParams {
   mangaId: number;
   chapterNumber: number | null;
   totalPages: number;
+  smartDownloads?: boolean;
 }
 
 export function useChapterNavigation({
@@ -22,6 +26,7 @@ export function useChapterNavigation({
   mangaId,
   chapterNumber,
   totalPages,
+  smartDownloads = false,
 }: UseChapterNavigationParams) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -79,6 +84,11 @@ export function useChapterNavigation({
 
       if (totalPages > 0 && pageIndex >= totalPages - 1) {
         markRead();
+        if (smartDownloads) {
+          deleteChapterFiles(mangaId, chapterId).catch(() => {});
+          deleteDownloadEntry(chapterId).catch(() => {});
+          queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+        }
       }
 
       // Prefetch next chapter's page list when nearing the end
@@ -89,7 +99,7 @@ export function useChapterNavigation({
         });
       }
     },
-    [saveProgress, markRead, totalPages, adjacent, queryClient],
+    [saveProgress, markRead, totalPages, adjacent, queryClient, smartDownloads, mangaId, chapterId],
   );
 
   const navigateToChapter = useCallback(

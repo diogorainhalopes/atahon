@@ -18,10 +18,20 @@ export const migrationJournal = {
       tag: '0000_init',
       breakpoints: true,
     },
+    {
+      idx: 1,
+      version: '7',
+      when: 1700000001000,
+      tag: '0001_smart_downloads',
+      breakpoints: true,
+    },
   ],
 };
 
 export const migrationStatements = {
+  '0001_smart_downloads': `
+    ALTER TABLE manga ADD COLUMN smart_downloads INTEGER DEFAULT 0 NOT NULL;
+  `,
   '0000_init': `
     CREATE TABLE IF NOT EXISTS \`manga\` (
       \`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,

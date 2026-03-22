@@ -9,9 +9,13 @@ import {
   updateMangaDetails,
   upsertChaptersFromSource,
   toggleMangaInLibrary,
+  setMangaSmartDownloads,
   type UpdateEntry,
 } from '@db/queries/manga';
 import type { Manga } from '@db/schema';
+import { bulkEnqueueChapters } from '@db/queries/downloads';
+import { useDownloadStore } from '@stores/downloadStore';
+import { startWorker } from '@utils/downloadWorker';
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -113,17 +117,40 @@ export function useFetchChapterList() {
       mangaId,
       sourceId,
       mangaUrl,
+      mangaTitle,
+      smartDownloads = false,
     }: {
       mangaId: number;
       sourceId: string;
       mangaUrl: string;
+      mangaTitle?: string;
+      smartDownloads?: boolean;
     }) => {
       const chapters = await ExtensionBridge.getChapterList(sourceId, mangaUrl);
-      await upsertChaptersFromSource(mangaId, chapters);
-      return mangaId;
+      const newChapters = await upsertChaptersFromSource(mangaId, chapters);
+      return { mangaId, mangaTitle, sourceId, smartDownloads, newChapters };
     },
-    onSuccess: (mangaId) => {
+    onSuccess: async ({ mangaId, mangaTitle, sourceId, smartDownloads, newChapters }) => {
       queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+
+      if (smartDownloads && newChapters.length > 0 && mangaTitle) {
+        await bulkEnqueueChapters(
+          newChapters.map((ch) => ({ chapterId: ch.id, mangaId })),
+        );
+        for (const ch of newChapters) {
+          useDownloadStore.getState().enqueue({
+            id: ch.id,
+            chapterId: ch.id,
+            mangaId,
+            mangaTitle,
+            chapterName: ch.name,
+            sourceId,
+            chapterUrl: ch.sourceUrl,
+          });
+        }
+        startWorker();
+        queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+      }
     },
   });
 }
@@ -145,6 +172,26 @@ export function useToggleLibrary() {
     onSuccess: (mangaId) => {
       queryClient.invalidateQueries({ queryKey: mangaKeys.detail(mangaId) });
       queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
+    },
+  });
+}
+
+export function useToggleSmartDownloads() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      mangaId,
+      enabled,
+    }: {
+      mangaId: number;
+      enabled: boolean;
+    }) => {
+      await setMangaSmartDownloads(mangaId, enabled);
+      return { mangaId };
+    },
+    onSuccess: ({ mangaId }) => {
+      queryClient.invalidateQueries({ queryKey: mangaKeys.detail(mangaId) });
     },
   });
 }

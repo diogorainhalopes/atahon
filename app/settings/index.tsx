@@ -136,7 +136,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Appearance</Text>
           <View style={styles.sectionCard}>
-            <SettingRow label="Theme">
+            <SettingRow label="Theme (WIP)">
               <SegmentChooser
                 options={['dark', 'amoled'] as const}
                 value={theme}
