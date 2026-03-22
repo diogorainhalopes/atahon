@@ -2,17 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Network from 'expo-network';
 import { FlashList } from '@shopify/flash-list';
 import {
   ArrowLeft,
@@ -40,6 +43,7 @@ import {
 } from '@queries/manga';
 import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
 import { useDownloadStore } from '@stores/downloadStore';
+import { useSettingsStore } from '@stores/settingsStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 280;
@@ -179,6 +183,14 @@ export default function MangaDetailScreen() {
   const [descExpanded, setDescExpanded] = useState(false);
   const hasTriggeredFetch = useRef(false);
 
+  // Settings
+  const downloadOnWifiOnly = useSettingsStore((s) => s.downloadOnWifiOnly);
+  const setDownloadOnWifiOnly = useSettingsStore((s) => s.setDownloadOnWifiOnly);
+
+  // Wi-Fi modal state
+  const [wifiModalVisible, setWifiModalVisible] = useState(false);
+  const pendingAction = useRef<(() => void) | null>(null);
+
   // Fetch from source on first visit
   useEffect(() => {
     if (!manga || manga.initialized || hasTriggeredFetch.current) return;
@@ -213,20 +225,42 @@ export default function MangaDetailScreen() {
     fetchChapters.mutate(params);
   }, [manga, isRefreshing]);
 
+  // Wi-Fi guard for downloads
+  const withWifiGuard = useCallback(
+    async (action: () => void) => {
+      if (!downloadOnWifiOnly) {
+        action();
+        return;
+      }
+
+      const { type } = await Network.getNetworkStateAsync();
+      if (type === Network.NetworkStateType.WIFI) {
+        action();
+        return;
+      }
+
+      pendingAction.current = action;
+      setWifiModalVisible(true);
+    },
+    [downloadOnWifiOnly]
+  );
+
   // Download handlers
   const handleDownloadChapter = useCallback(
     (chapter: Chapter) => {
       if (!manga) return;
-      enqueueDownload.mutate({
-        chapterId: chapter.id,
-        mangaId: manga.id,
-        mangaTitle: manga.title,
-        chapterName: chapter.name,
-        sourceId: manga.sourceId,
-        chapterUrl: chapter.sourceUrl,
+      withWifiGuard(() => {
+        enqueueDownload.mutate({
+          chapterId: chapter.id,
+          mangaId: manga.id,
+          mangaTitle: manga.title,
+          chapterName: chapter.name,
+          sourceId: manga.sourceId,
+          chapterUrl: chapter.sourceUrl,
+        });
       });
     },
-    [manga, enqueueDownload],
+    [manga, enqueueDownload, withWifiGuard],
   );
 
   const handleDownloadAll = useCallback(() => {
@@ -242,9 +276,11 @@ export default function MangaDetailScreen() {
         chapterUrl: ch.sourceUrl,
       }));
     if (toDownload.length > 0) {
-      bulkEnqueueDownload.mutate(toDownload);
+      withWifiGuard(() => {
+        bulkEnqueueDownload.mutate(toDownload);
+      });
     }
-  }, [manga, chapters, bulkEnqueueDownload]);
+  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
 
   const handleDownloadNew = useCallback(() => {
     if (!manga || !chapters) return;
@@ -259,9 +295,11 @@ export default function MangaDetailScreen() {
         chapterUrl: ch.sourceUrl,
       }));
     if (toDownload.length > 0) {
-      bulkEnqueueDownload.mutate(toDownload);
+      withWifiGuard(() => {
+        bulkEnqueueDownload.mutate(toDownload);
+      });
     }
-  }, [manga, chapters, bulkEnqueueDownload]);
+  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
 
   // Parse genres
   const genres = useMemo(() => {
@@ -534,6 +572,53 @@ export default function MangaDetailScreen() {
           </View>
         </Pressable>
       </View>
+
+      {/* Wi-Fi Only Modal */}
+      <Modal
+        visible={wifiModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWifiModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setWifiModalVisible(false)}>
+          <View style={styles.wifiBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.wifiModal}>
+                <View style={styles.wifiHeader}>
+                  <Text style={styles.wifiTitle}>Wi-Fi Only Enabled</Text>
+                </View>
+                <View style={styles.wifiBody}>
+                  <Text style={styles.wifiMessage}>
+                    You're not connected to Wi-Fi. Disable Wi-Fi Only to download on mobile data.
+                  </Text>
+                </View>
+                <View style={styles.wifiActions}>
+                  <TouchableOpacity
+                    style={styles.wifiCancelBtn}
+                    onPress={() => {
+                      pendingAction.current = null;
+                      setWifiModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.wifiCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.wifiConfirmBtn}
+                    onPress={() => {
+                      setDownloadOnWifiOnly(false);
+                      pendingAction.current?.();
+                      pendingAction.current = null;
+                      setWifiModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.wifiConfirmText}>Disable & Download</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </>
   );
 }
@@ -767,5 +852,65 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.xs,
     color: colors.accent.DEFAULT,
     fontWeight: typography.weights.medium,
+  },
+
+  // Wi-Fi modal
+  wifiBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing[5],
+  },
+  wifiModal: {
+    backgroundColor: colors.background.card,
+    borderRadius: radius['2xl'],
+    width: '100%',
+    overflow: 'hidden',
+  },
+  wifiHeader: {
+    padding: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.DEFAULT,
+  },
+  wifiTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text.primary,
+  },
+  wifiBody: {
+    padding: spacing[5],
+  },
+  wifiMessage: {
+    fontSize: typography.sizes.base,
+    color: colors.text.secondary,
+    lineHeight: 22,
+  },
+  wifiActions: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: colors.border.DEFAULT,
+  },
+  wifiCancelBtn: {
+    flex: 1,
+    padding: spacing[4],
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: colors.border.DEFAULT,
+  },
+  wifiCancelText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    color: colors.text.secondary,
+  },
+  wifiConfirmBtn: {
+    flex: 1,
+    padding: spacing[4],
+    alignItems: 'center',
+  },
+  wifiConfirmText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.accent.DEFAULT,
   },
 });

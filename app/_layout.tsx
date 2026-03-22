@@ -18,7 +18,7 @@ import { useDownloadStore } from '@stores/downloadStore';
 // Prevent splash from auto hiding
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
@@ -61,7 +61,7 @@ export default function RootLayout() {
         await SplashScreen.hideAsync();
       }
     }
-  
+
     prepare();
 
     // Cleanup: stop worker on unmount
@@ -80,8 +80,10 @@ export default function RootLayout() {
 
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(modals)" options={{ presentation: 'transparentModal', headerShown: false, }} />
             <Stack.Screen name="extensions" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="downloads" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
 
             <Stack.Screen
               name="manga/[mangaId]/index"

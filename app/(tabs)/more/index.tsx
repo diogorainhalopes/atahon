@@ -40,7 +40,6 @@ function MenuItem({ icon: Icon, label, onPress }: MenuItemProps) {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const [showAbout, setShowAbout] = useState(false);
 
   return (
     <>
@@ -64,15 +63,21 @@ export default function MoreScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>App</Text>
             <View style={styles.sectionCard}>
-              <MenuItem icon={Settings} label="Settings" />
+              <MenuItem
+                icon={Settings}
+                label="Settings"
+                onPress={() => router.push('/settings')}
+              />
               <View style={styles.divider} />
-              <MenuItem icon={Info} label="About" onPress={() => setShowAbout(true)} />
+              <MenuItem
+                icon={Info}
+                label="About"
+                onPress={() => router.push('/(modals)/about')}
+              />
             </View>
           </View>
         </ScrollView>
       </Screen>
-
-      <AboutModal visible={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 }

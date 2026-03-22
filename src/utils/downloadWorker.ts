@@ -5,6 +5,8 @@ import { useDownloadStore } from '@stores/downloadStore';
 import { useSettingsStore } from '@stores/settingsStore';
 import { updateDownloadProgress, markDownloadComplete, markDownloadError } from '@db/queries/downloads';
 import { chapterDir, indexPath, pagePath, PageIndex } from '@utils/downloadPaths';
+import { queryClient } from '../../app/_layout';
+import { mangaKeys } from '@queries/manga';
 
 const MODULE = 'DownloadWorker';
 
@@ -189,6 +191,9 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
     Logger.debug(MODULE, `Marking chapter ${chapterId} as complete`);
     await markDownloadComplete(chapterId);
 
+    // Invalidate chapters query cache so UI reflects the completion
+    queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(item.mangaId) });
+
     // Step 7: Update store
     useDownloadStore.getState().updateStatus(chapterId, 'completed');
 
@@ -199,6 +204,10 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
 
     // Mark as error in DB and store
     await markDownloadError(chapterId, errorMessage);
+
+    // Invalidate chapters query cache so UI reflects the error
+    queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(item.mangaId) });
+
     useDownloadStore.getState().updateStatus(chapterId, 'error', errorMessage);
   }
 }
