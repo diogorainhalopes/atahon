@@ -44,6 +44,7 @@ import {
   useToggleSmartDownloads,
 } from '@queries/manga';
 import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
+import { useMergedExtensions, useRepos } from '@queries/extensions';
 import { useDownloadStore } from '@stores/downloadStore';
 import { useSettingsStore } from '@stores/settingsStore';
 
@@ -189,6 +190,28 @@ export default function MangaDetailScreen() {
   // Settings
   const downloadOnWifiOnly = useSettingsStore((s) => s.downloadOnWifiOnly);
   const setDownloadOnWifiOnly = useSettingsStore((s) => s.setDownloadOnWifiOnly);
+
+  // Extension/repo info
+  const { data: repos = [] } = useRepos();
+  const { data: extensions = [] } = useMergedExtensions(repos);
+
+  // Find extension info for this manga's source
+  const extensionInfo = useMemo(() => {
+    if (!manga) return null;
+    if (!extensions.length) return null;
+
+    // sourceId is a Tachiyomi source ID (numeric), search through extension sources
+    const sourceIdStr = String(manga.sourceId);
+    for (const ext of extensions) {
+      const sourceFound = ext.sources.find((s) => String(s.id) === sourceIdStr);
+      if (sourceFound) {
+        // Found the extension that contains this source
+        const repoName = repos.find((r) => r.url === ext.repoUrl)?.name ?? 'Unknown';
+        return { name: ext.name, repo: repoName };
+      }
+    }
+    return null;
+  }, [manga?.sourceId, extensions, repos]);
 
   // Wi-Fi modal state
   const [wifiModalVisible, setWifiModalVisible] = useState(false);
@@ -392,17 +415,34 @@ export default function MangaDetailScreen() {
 
           {/* Description */}
           {manga.description ? (
-            <Pressable onPress={() => setDescExpanded((v) => !v)}>
-              <Text
-                style={styles.description}
-                numberOfLines={descExpanded ? undefined : 3}
-              >
-                {manga.description}
-              </Text>
-              {!descExpanded && (
-                <Text style={styles.expandHint}>...more</Text>
+            <>
+              <Pressable onPress={() => setDescExpanded((v) => !v)}>
+                <Text
+                  style={styles.description}
+                  numberOfLines={descExpanded ? undefined : 3}
+                >
+                  {manga.description}
+                </Text>
+                {!descExpanded && (
+                  <Text style={styles.expandHint}>...more</Text>
+                )}
+              </Pressable>
+              {extensionInfo && (
+                <View style={styles.sourceContainer}>
+                  <Text style={styles.sourceInfo}>
+                    <Text style={styles.sourceLabel}>Source:</Text> {extensionInfo.name}{' '}
+                    <Text style={styles.sourceRepo}>({extensionInfo.repo})</Text>
+                  </Text>
+                </View>
               )}
-            </Pressable>
+            </>
+          ) : extensionInfo ? (
+            <View style={styles.sourceContainer}>
+              <Text style={styles.sourceInfo}>
+                <Text style={styles.sourceLabel}>Source:</Text> {extensionInfo.name}{' '}
+                <Text style={styles.sourceRepo}>({extensionInfo.repo})</Text>
+              </Text>
+            </View>
           ) : null}
 
           {/* Genres */}
@@ -750,6 +790,24 @@ const styles = StyleSheet.create({
     color: colors.accent.DEFAULT,
     fontWeight: typography.weights.medium,
     marginTop: 2,
+  },
+  sourceContainer: {
+    marginTop: spacing[3],
+    paddingTop: spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: colors.border.subtle,
+  },
+  sourceInfo: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.muted,
+    lineHeight: 16,
+  },
+  sourceLabel: {
+    fontWeight: typography.weights.semibold,
+    color: colors.text.secondary,
+  },
+  sourceRepo: {
+    color: colors.text.muted,
   },
 
   // Genres

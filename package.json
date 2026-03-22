@@ -17,6 +17,7 @@
     "drizzle-orm": "^0.45.1",
     "expo": "~55.0.5",
     "expo-blur": "~55.0.10",
+    "expo-clipboard": "^55.0.4",
     "expo-constants": "~55.0.9",
     "expo-file-system": "~55.0.11",
     "expo-font": "~55.0.4",

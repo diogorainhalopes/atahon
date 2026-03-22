@@ -22,7 +22,7 @@ export const extensionKeys = {
 // ─── Repo index fetcher ───────────────────────────────────────────────────────
 
 export async function fetchRepoIndex(repoUrl: string): Promise<ExtensionIndexEntry[]> {
-  const res = await fetch(`${repoUrl}/index.min.json`);
+  const res = await fetch(repoUrl);
   if (!res.ok) throw new Error(`Failed to fetch index from ${repoUrl}: ${res.status}`);
   return res.json() as Promise<ExtensionIndexEntry[]>;
 }
@@ -65,6 +65,7 @@ export function useToggleRepo() {
     mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) => toggleRepo(id, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: extensionKeys.repos() });
+      queryClient.invalidateQueries({ queryKey: extensionKeys.merged() });
     },
   });
 }
@@ -109,16 +110,15 @@ export function useMergedExtensions(repos: ExtensionRepo[]): {
 } {
   const installedQuery = useInstalledExtensions();
 
-  // Parallel fetch of all enabled repo indexes — useQueries avoids Rules-of-Hooks issues
+  // Parallel fetch of ALL repo indexes (enabled + disabled)
+  // Disabled repos are needed to show full info for installed extensions from those repos
   const indexQueries = useQueries({
-    queries: repos
-      .filter((r) => r.enabled)
-      .map((repo) => ({
-        queryKey: extensionKeys.index(repo.url),
-        queryFn: () => fetchRepoIndex(repo.url),
-        staleTime: 5 * 60 * 1000,
-        meta: { repoUrl: repo.url },
-      })),
+    queries: repos.map((repo) => ({
+      queryKey: extensionKeys.index(repo.url),
+      queryFn: () => fetchRepoIndex(repo.url),
+      staleTime: 5 * 60 * 1000,
+      meta: { repoUrl: repo.url, enabled: repo.enabled },
+    })),
   });
 
   const isLoading =
@@ -140,12 +140,21 @@ export function useMergedExtensions(repos: ExtensionRepo[]): {
   const merged: ExtensionInfo[] = [];
 
   indexQueries.forEach((q, i) => {
-    const repoUrl = repos.filter((r) => r.enabled)[i]?.url ?? '';
+    const repo = repos[i];
+    const repoUrl = repo?.url ?? '';
+    const repoEnabled = repo?.enabled ?? false;
+
     for (const entry of q.data ?? []) {
+      // Skip if already seen, or if from disabled repo and not installed
       if (seen.has(entry.pkg)) continue;
+      const isInstalled = installedMap.has(entry.pkg);
+      if (!repoEnabled && !isInstalled) continue;
+
       seen.add(entry.pkg);
 
       const installedExt = installedMap.get(entry.pkg);
+      // Strip /index.min.json from repoUrl for APK URL construction
+      const baseRepoUrl = repoUrl.replace(/\/index\.min\.json$/, '');
       merged.push({
         pkgName: entry.pkg,
         name: entry.name,
@@ -164,7 +173,8 @@ export function useMergedExtensions(repos: ExtensionRepo[]): {
         installed: !!installedExt,
         hasUpdate: installedExt ? entry.code > installedExt.versionCode : false,
         repoUrl,
-        apkUrl: `${repoUrl}/apk/${entry.apk}`,
+        apkUrl: `${baseRepoUrl}/apk/${entry.apk}`,
+        iconUrl: `${baseRepoUrl}/icon/${entry.pkg}.png`,
       });
     }
   });

@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdjacentChapters, readerKeys } from '@queries/reader';
 import { mangaKeys } from '@queries/manga';
+import { useSettingsStore } from '@stores/settingsStore';
 import {
   saveReadingProgress,
   markChapterRead,
@@ -30,6 +31,7 @@ export function useChapterNavigation({
 }: UseChapterNavigationParams) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const anonymousMode = useSettingsStore((s) => s.anonymousMode);
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const lastSavedPage = useRef(-1);
   const pendingPage = useRef(-1);
@@ -42,35 +44,35 @@ export function useChapterNavigation({
 
   // Record history on mount (guard against mangaId=0 before chapter data loads)
   useEffect(() => {
-    if (mangaId > 0) {
+    if (mangaId > 0 && !anonymousMode) {
       upsertHistory(chapterId, mangaId).catch(() => {});
     }
-  }, [chapterId, mangaId]);
+  }, [chapterId, mangaId, anonymousMode]);
 
   // Flush pending progress on unmount
   useEffect(() => {
     return () => {
       clearTimeout(debounceTimer.current);
-      if (pendingPage.current >= 0 && pendingPage.current !== lastSavedPage.current) {
+      if (!anonymousMode && pendingPage.current >= 0 && pendingPage.current !== lastSavedPage.current) {
         saveReadingProgress(chapterId, pendingPage.current).catch(() => {});
       }
     };
     // chapterId is stable per mount (from route params)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [anonymousMode]);
 
   const saveProgress = useCallback(
     (pageIndex: number) => {
       pendingPage.current = pageIndex;
       clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
-        if (pageIndex !== lastSavedPage.current) {
+        if (!anonymousMode && pageIndex !== lastSavedPage.current) {
           lastSavedPage.current = pageIndex;
           saveReadingProgress(chapterId, pageIndex).catch(() => {});
         }
       }, DEBOUNCE_MS);
     },
-    [chapterId],
+    [chapterId, anonymousMode],
   );
 
   const markRead = useCallback(() => {
@@ -83,7 +85,9 @@ export function useChapterNavigation({
       saveProgress(pageIndex);
 
       if (totalPages > 0 && pageIndex >= totalPages - 1) {
-        markRead();
+        if (!anonymousMode) {
+          markRead();
+        }
         if (smartDownloads) {
           deleteChapterFiles(mangaId, chapterId).catch(() => {});
           deleteDownloadEntry(chapterId).catch(() => {});
@@ -99,7 +103,7 @@ export function useChapterNavigation({
         });
       }
     },
-    [saveProgress, markRead, totalPages, adjacent, queryClient, smartDownloads, mangaId, chapterId],
+    [saveProgress, markRead, totalPages, adjacent, queryClient, smartDownloads, mangaId, chapterId, anonymousMode],
   );
 
   const navigateToChapter = useCallback(

@@ -126,6 +126,8 @@ export default function SettingsScreen() {
     setCompressDownloads,
     downloadQuality,
     setDownloadQuality,
+    anonymousMode,
+    setAnonymousMode,
   } = useSettingsStore();
 
   return (
@@ -166,6 +168,27 @@ export default function SettingsScreen() {
                 labels={['S', 'M', 'L']}
               />
             </SettingRow>
+          </View>
+        </View>
+
+        {/* ─── Privacy ─── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Privacy</Text>
+          <View style={styles.sectionCard}>
+            <SettingRow label="Anonymous Mode">
+              <Switch
+                value={anonymousMode}
+                onValueChange={setAnonymousMode}
+                trackColor={{ false: colors.border.DEFAULT, true: colors.accent.muted }}
+                thumbColor={anonymousMode ? colors.accent.DEFAULT : colors.text.muted}
+              />
+            </SettingRow>
+            <View style={styles.divider} />
+            <View style={styles.settingHint}>
+              <Text style={styles.settingHintText}>
+                When enabled, reading history and chapter progress will not be saved.
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -263,6 +286,14 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border.subtle,
+  },
+  settingHint: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+  },
+  settingHintText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.muted,
   },
 
   // Segment Chooser

@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Puzzle, Download, Settings, ChevronRight, Info } from 'lucide-react-native';
+import { Puzzle, Download, Database, Settings, ChevronRight, Info } from 'lucide-react-native';
 import Screen from '@components/Screen';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
@@ -52,6 +52,12 @@ export default function MoreScreen() {
             <Text style={styles.sectionTitle}>Content</Text>
             <View style={styles.sectionCard}>
               <MenuItem icon={Puzzle} label="Extensions" onPress={() => router.push('/extensions')} />
+              <View style={styles.divider} />
+              <MenuItem
+                icon={Database}
+                label="Repositories"
+                onPress={() => router.push('/extensions/repos')}
+              />
               <View style={styles.divider} />
               <MenuItem
                 icon={Download}

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Alert,
   ScrollView,
@@ -7,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { colors } from '@theme/colors';
@@ -51,7 +53,8 @@ function SourceRow({ source, enabled, onToggle }: SourceRowProps) {
 // ─── ExtensionDetailsScreen ──────────────────────────────────────────────────
 
 export default function ExtensionDetailsScreen() {
-  const { pkgName } = useLocalSearchParams<{ pkgName: string }>();
+  const [imageError, setImageError] = useState(false);
+  const { pkgName, iconUrl } = useLocalSearchParams<{ pkgName: string; iconUrl?: string }>();
   const router = useRouter();
 
   const { data: extensions = [] } = useInstalledExtensions();
@@ -103,11 +106,20 @@ export default function ExtensionDetailsScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         {/* ── Header ──────────────────────────────────────────────── */}
         <View style={styles.header}>
-          <View style={styles.headerIcon}>
-            <Text style={styles.headerIconText}>
-              {extension.name.charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          {iconUrl && !imageError ? (
+            <Image
+              source={{ uri: iconUrl }}
+              style={styles.headerIcon}
+              contentFit="contain"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <View style={styles.headerIcon}>
+              <Text style={styles.headerIconText}>
+                {extension.name.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={styles.headerInfo}>
             <Text style={styles.headerName} numberOfLines={1}>{extension.name}</Text>
             <Text style={styles.headerMeta}>

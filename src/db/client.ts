@@ -26,7 +26,7 @@ export function runMigrations(): void {
   );
   const appliedSet = new Set(applied.map((r) => r.hash));
 
-  for (const [tag, sql] of Object.entries(migrationStatements)) {
+  for (const [tag, sql] of Object.entries(migrationStatements).sort(([a], [b]) => a.localeCompare(b))) {
     if (!appliedSet.has(tag)) {
       try {
         expo.execSync(sql);
@@ -66,7 +66,7 @@ export function runMigrations(): void {
     const now = Math.floor(Date.now() / 1000);
     expo.runSync(
       'INSERT OR IGNORE INTO extension_repo (url, name, enabled, created_at) VALUES (?, ?, ?, ?)',
-      ['https://raw.githubusercontent.com/keiyoushi/extensions/repo', 'Keiyoushi', 1, now],
+      ['https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json', 'Keiyoushi', 1, now],
     );
   }
 }

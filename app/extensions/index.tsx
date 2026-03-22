@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { ChevronRight, Search } from 'lucide-react-native';
 
@@ -35,6 +36,7 @@ interface ExtensionRowProps {
 }
 
 function ExtensionRow({ item, installing, enabledCount, onInstall, onUninstall, onPress }: ExtensionRowProps) {
+  const [imageError, setImageError] = useState(false);
   const initial = item.name.charAt(0).toUpperCase();
 
   const actionLabel = item.hasUpdate ? 'Update' : item.installed ? 'Uninstall' : 'Install';
@@ -60,9 +62,18 @@ function ExtensionRow({ item, installing, enabledCount, onInstall, onUninstall, 
 
   return (
     <Wrapper style={styles.row} onPress={item.installed ? onPress : undefined} activeOpacity={0.7}>
-      <View style={styles.rowIcon}>
-        <Text style={styles.rowIconText}>{initial}</Text>
-      </View>
+      {item.iconUrl && !imageError ? (
+        <Image
+          source={{ uri: item.iconUrl }}
+          style={styles.rowIcon}
+          contentFit="contain"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <View style={styles.rowIcon}>
+          <Text style={styles.rowIconText}>{initial}</Text>
+        </View>
+      )}
 
       <View style={styles.rowCenter}>
         <View style={styles.rowNameLine}>
@@ -132,7 +143,7 @@ export default function ExtensionsScreen() {
     setInstallingPkg(item.pkgName);
     try {
       await installMutation.mutateAsync({ apkUrl: item.apkUrl, pkgName: item.pkgName });
-      router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName } });
+      router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName, iconUrl: item.iconUrl } });
     } finally {
       setInstallingPkg(null);
     }
@@ -187,7 +198,7 @@ export default function ExtensionsScreen() {
                 enabledCount={item.sources.filter((s) => enabledSourceIds.includes(s.id)).length}
                 onInstall={() => handleInstall(item)}
                 onUninstall={() => handleUninstall(item)}
-                onPress={() => router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName } })}
+                onPress={() => router.push({ pathname: '/extensions/[pkgName]', params: { pkgName: item.pkgName, iconUrl: item.iconUrl } })}
               />
             )}
             renderSectionHeader={({ section }) => (

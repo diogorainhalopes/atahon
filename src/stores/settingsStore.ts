@@ -22,6 +22,8 @@ interface SettingsState {
   // Reader defaults
   defaultReadingMode: 'webtoon' | 'ltr' | 'rtl' | 'vertical';
   defaultPreloadCount: number;
+  // Privacy
+  anonymousMode: boolean;
   // Actions
   setTheme: (theme: Theme) => void;
   setGridSize: (size: GridSize) => void;
@@ -34,6 +36,7 @@ interface SettingsState {
   setDownloadQuality: (quality: number) => void;
   setDefaultReadingMode: (mode: 'webtoon' | 'ltr' | 'rtl' | 'vertical') => void;
   setDefaultPreloadCount: (n: number) => void;
+  setAnonymousMode: (enabled: boolean) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -50,6 +53,7 @@ export const useSettingsStore = create<SettingsState>()(
       downloadQuality: 80,
       defaultReadingMode: 'webtoon',
       defaultPreloadCount: 3,
+      anonymousMode: false,
 
       setTheme: (theme) => set({ theme }),
       setGridSize: (gridSize) => set({ gridSize }),
@@ -62,6 +66,7 @@ export const useSettingsStore = create<SettingsState>()(
       setDownloadQuality: (downloadQuality) => set({ downloadQuality }),
       setDefaultReadingMode: (defaultReadingMode) => set({ defaultReadingMode }),
       setDefaultPreloadCount: (defaultPreloadCount) => set({ defaultPreloadCount }),
+      setAnonymousMode: (anonymousMode) => set({ anonymousMode }),
     }),
     {
       name: 'atahon-settings',

@@ -25,13 +25,17 @@ export const migrationJournal = {
       tag: '0001_smart_downloads',
       breakpoints: true,
     },
+    {
+      idx: 2,
+      version: '7',
+      when: 1700000002000,
+      tag: '0002_repo_url_full',
+      breakpoints: true,
+    },
   ],
 };
 
 export const migrationStatements = {
-  '0001_smart_downloads': `
-    ALTER TABLE manga ADD COLUMN smart_downloads INTEGER DEFAULT 0 NOT NULL;
-  `,
   '0000_init': `
     CREATE TABLE IF NOT EXISTS \`manga\` (
       \`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -120,6 +124,12 @@ export const migrationStatements = {
       \`created_at\` integer NOT NULL
     );
     CREATE UNIQUE INDEX IF NOT EXISTS \`extension_repo_url_unique\` ON \`extension_repo\` (\`url\`);
+  `,
+  '0001_smart_downloads': `
+    ALTER TABLE manga ADD COLUMN smart_downloads INTEGER DEFAULT 0 NOT NULL;
+  `,
+  '0002_repo_url_full': `
+    UPDATE extension_repo SET url = url || '/index.min.json' WHERE url NOT LIKE '%/index.min.json';
   `,
 };
 
