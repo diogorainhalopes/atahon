@@ -122,6 +122,10 @@ export default function SettingsScreen() {
     setDownloadOnWifiOnly,
     concurrentDownloads,
     setConcurrentDownloads,
+    compressDownloads,
+    setCompressDownloads,
+    downloadQuality,
+    setDownloadQuality,
   } = useSettingsStore();
 
   return (
@@ -186,6 +190,28 @@ export default function SettingsScreen() {
                 max={10}
               />
             </SettingRow>
+            <View style={styles.divider} />
+            <SettingRow label="Compress Downloads">
+              <Switch
+                value={compressDownloads}
+                onValueChange={setCompressDownloads}
+                trackColor={{ false: colors.border.DEFAULT, true: colors.accent.muted }}
+                thumbColor={compressDownloads ? colors.accent.DEFAULT : colors.text.muted}
+              />
+            </SettingRow>
+            {compressDownloads && (
+              <>
+                <View style={styles.divider} />
+                <SettingRow label="Image Quality">
+                  <SegmentChooser
+                    options={['65', '80', '90'] as const}
+                    value={String(downloadQuality) as '65' | '80' | '90'}
+                    onChange={(v) => setDownloadQuality(Number(v))}
+                    labels={['Low', 'Medium', 'High']}
+                  />
+                </SettingRow>
+              </>
+            )}
           </View>
         </View>
       </ScrollView>

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image } from 'expo-image';
+import * as Network from 'expo-network';
 import ExtensionBridge from 'extension-bridge';
 import type { Page } from '@/types/extensions';
 import type { ReaderPage } from './types';
 import { usePageList } from '@queries/reader';
-import { readChapterIndex, pagePath } from '@utils/downloadPaths';
+import { readChapterIndex, chapterDir } from '@utils/downloadPaths';
 
 export function usePageLoader(
   sourceId: string,
@@ -44,18 +45,28 @@ export function usePageLoader(
         if (index) {
           // Load from local storage
           const map = new Map<number, ReaderPage>();
+          const chapDir = chapterDir(mangaId, chapterId);
+
           for (const page of index.pages) {
-            const localPath = pagePath(mangaId, chapterId, page.index);
+            // Use the actual filename from pages.json to preserve extension (jpg or webp)
+            const localPath = `file://${chapDir}${page.filename}`;
             map.set(page.index, {
               index: page.index,
               url: page.url, // Preserve original URL for network fallback if local load fails
-              imageUrl: localPath, // pagePath already includes file:// prefix
+              imageUrl: localPath,
               state: 'ready',
             });
           }
           pagesRef.current = map;
           setIsLocallyLoaded(true);
           setEnableNetworkQuery(false);
+
+          // Prefetch all local images
+          for (const page of index.pages) {
+            const localPath = `file://${chapDir}${page.filename}`;
+            Image.prefetch(localPath).catch(() => {});
+          }
+
           setRenderKey((k) => k + 1);
         } else {
           // Not downloaded locally, enable network query
@@ -81,6 +92,36 @@ export function usePageLoader(
       isMounted = false;
     };
   }, [mangaId, chapterId]);
+
+  // Check if we should show offline error
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkOnline = async () => {
+      const state = await Network.getNetworkStateAsync();
+      if (isMounted) {
+        setIsOnline(state.isConnected ?? false);
+      }
+    };
+
+    checkOnline();
+  }, []);
+
+  // Improve error message when offline
+  let errorToReturn = error as Error | null;
+  if (
+    !isOnline &&
+    !isLocallyLoaded &&
+    error &&
+    (error.message.includes('Unable to resolve host') ||
+      error.message.includes('network') ||
+      error.message.includes('Network'))
+  ) {
+    errorToReturn = new Error(
+      'Offline mode - Cannot fetch chapters that are not downloaded'
+    );
+  }
 
   // Clear state when chapter changes
   useEffect(() => {
@@ -233,7 +274,7 @@ export function usePageLoader(
     pages,
     totalPages,
     isLoading,
-    error: error as Error | null,
+    error: errorToReturn,
     retryPage,
     markPageError,
     isOfflineChecking,

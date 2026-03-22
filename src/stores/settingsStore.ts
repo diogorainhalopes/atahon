@@ -17,6 +17,8 @@ interface SettingsState {
   // Downloads
   concurrentDownloads: number;
   downloadOnWifiOnly: boolean;
+  compressDownloads: boolean;
+  downloadQuality: number; // WebP quality 1–100
   // Reader defaults
   defaultReadingMode: 'webtoon' | 'ltr' | 'rtl' | 'vertical';
   defaultPreloadCount: number;
@@ -28,6 +30,8 @@ interface SettingsState {
   setLibraryUpdateInterval: (hours: number) => void;
   setConcurrentDownloads: (n: number) => void;
   setDownloadOnWifiOnly: (wifiOnly: boolean) => void;
+  setCompressDownloads: (enabled: boolean) => void;
+  setDownloadQuality: (quality: number) => void;
   setDefaultReadingMode: (mode: 'webtoon' | 'ltr' | 'rtl' | 'vertical') => void;
   setDefaultPreloadCount: (n: number) => void;
 }
@@ -42,6 +46,8 @@ export const useSettingsStore = create<SettingsState>()(
       libraryUpdateInterval: 12,
       concurrentDownloads: 6,
       downloadOnWifiOnly: false,
+      compressDownloads: true,
+      downloadQuality: 80,
       defaultReadingMode: 'webtoon',
       defaultPreloadCount: 3,
 
@@ -52,6 +58,8 @@ export const useSettingsStore = create<SettingsState>()(
       setLibraryUpdateInterval: (libraryUpdateInterval) => set({ libraryUpdateInterval }),
       setConcurrentDownloads: (concurrentDownloads) => set({ concurrentDownloads }),
       setDownloadOnWifiOnly: (downloadOnWifiOnly) => set({ downloadOnWifiOnly }),
+      setCompressDownloads: (compressDownloads) => set({ compressDownloads }),
+      setDownloadQuality: (downloadQuality) => set({ downloadQuality }),
       setDefaultReadingMode: (defaultReadingMode) => set({ defaultReadingMode }),
       setDefaultPreloadCount: (defaultPreloadCount) => set({ defaultPreloadCount }),
     }),

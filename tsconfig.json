@@ -25,6 +25,9 @@
       "@utils/*": [
         "src/utils/*"
       ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
       "@theme/*": [
         "src/theme/*"
       ]

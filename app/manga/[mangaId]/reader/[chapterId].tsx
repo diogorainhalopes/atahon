@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import PagerView from 'react-native-pager-view';
 import type { FlashListRef } from '@shopify/flash-list';
+import { ChevronLeft } from 'lucide-react-native';
 import { colors } from '@theme/colors';
 import { typography } from '@theme/typography';
 import { useReaderStore } from '@stores/readerStore';
@@ -17,6 +18,7 @@ import { ReaderOverlay } from '@reader/ReaderOverlay';
 import { useKeepScreenOn } from '@reader/useKeepScreenOn';
 
 export default function ReaderScreen() {
+  const router = useRouter();
   const { mangaId, chapterId } = useLocalSearchParams<{
     mangaId: string;
     chapterId: string;
@@ -148,6 +150,14 @@ export default function ReaderScreen() {
           <Text style={styles.errorText}>
             {error?.message ?? 'Chapter not found'}
           </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <ChevronLeft size={20} color={colors.text.primary} />
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </>
     );
@@ -234,6 +244,22 @@ const styles = StyleSheet.create({
     color: colors.status.error,
     textAlign: 'center',
     paddingHorizontal: 24,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: colors.background.card,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+  },
+  backButtonText: {
+    fontSize: typography.sizes.base,
+    color: colors.text.primary,
+    fontWeight: typography.weights.medium,
   },
   pageIndicator: {
     position: 'absolute',

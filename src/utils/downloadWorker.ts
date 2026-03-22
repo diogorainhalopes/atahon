@@ -1,3 +1,4 @@
+import { Dimensions } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import ExtensionBridge from 'extension-bridge';
 import { Logger } from '@utils/logger';
@@ -7,6 +8,8 @@ import { updateDownloadProgress, markDownloadComplete, markDownloadError } from 
 import { chapterDir, indexPath, pagePath, PageIndex } from '@utils/downloadPaths';
 import { queryClient } from '../../app/_layout';
 import { mangaKeys } from '@queries/manga';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const MODULE = 'DownloadWorker';
 
@@ -115,12 +118,18 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
       throw new Error('No pages returned from extension');
     }
 
-    // Step 3: Create chapter directory
+    // Step 3: Read compression settings
+    const { compressDownloads, downloadQuality } = useSettingsStore.getState();
+    const ext = compressDownloads ? 'webp' : 'jpg';
+    const quality = compressDownloads ? downloadQuality : 0;
+    const maxWidth = compressDownloads ? Math.round(SCREEN_WIDTH * 1.5) : 0;
+
+    // Step 4: Create chapter directory
     const dir = chapterDir(mangaId, chapterId);
     Logger.debug(MODULE, `Creating directory: ${dir}`);
     await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
 
-    // Step 4: Download pages
+    // Step 5: Download pages
     const pageIndex: PageIndex = {
       chapterId,
       pageCount: pages.length,
@@ -151,17 +160,22 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
       // Download images in parallel
       await Promise.all(
         resolvedUrls.map(async ({ page, imageUrl }) => {
+          // Check if download was cancelled (directory deleted)
+          const dirExists = await FileSystem.getInfoAsync(chapterDir(mangaId, chapterId));
+          if (!dirExists.exists) {
+            throw new Error(`Download cancelled: chapter directory was deleted`);
+          }
+
           if (!imageUrl) {
             throw new Error(`No image URL for page ${page.index}`);
           }
 
-          const filename = `${page.index}.jpg`;
-          const filepath = pagePath(mangaId, chapterId, page.index);
+          const filename = `${page.index}.${ext}`;
+          const filepath = pagePath(mangaId, chapterId, page.index, ext);
 
           try {
             Logger.debug(MODULE, `Downloading page ${page.index}/${pages.length} to ${filename}`);
-            // Use extension's OkHttp client (via ExtensionBridge) to download with proper headers
-            await ExtensionBridge.downloadPage(sourceId, imageUrl, filepath);
+            await ExtensionBridge.downloadPage(sourceId, imageUrl, filepath, quality, maxWidth);
           } catch (e) {
             Logger.error(MODULE, `Failed to download page ${page.index}:`, e);
             throw e;
@@ -177,24 +191,34 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
       Logger.debug(MODULE, `Progress: ${Math.round(progress * 100)}%`);
     }
 
-    // Step 5: Write pages.json (completion sentinel)
+    // Step 6: Write pages.json (completion sentinel)
     Logger.debug(MODULE, `Writing pages.json for chapter ${chapterId}`);
     pageIndex.pages = pages.map((p) => ({
       index: p.index,
-      filename: `${p.index}.jpg`,
+      filename: `${p.index}.${ext}`,
       url: p.url,
     }));
+    // Store compression metadata
+    pageIndex.isCompressed = compressDownloads;
+    pageIndex.quality = compressDownloads ? downloadQuality : undefined;
     Logger.debug(MODULE, `pages.json content: ${JSON.stringify(pageIndex)}`);
+
+    // Check if chapter directory still exists (may have been deleted during download)
+    const dirExists = await FileSystem.getInfoAsync(chapterDir(mangaId, chapterId));
+    if (!dirExists.exists) {
+      throw new Error('Chapter directory was deleted during download');
+    }
+
     await FileSystem.writeAsStringAsync(indexPath(mangaId, chapterId), JSON.stringify(pageIndex));
 
-    // Step 6: Mark as complete in DB
+    // Step 7: Mark as complete in DB
     Logger.debug(MODULE, `Marking chapter ${chapterId} as complete`);
     await markDownloadComplete(chapterId);
 
     // Invalidate chapters query cache so UI reflects the completion
     queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(item.mangaId) });
 
-    // Step 7: Update store
+    // Step 8: Update store
     useDownloadStore.getState().updateStatus(chapterId, 'completed');
 
     Logger.info(MODULE, `✓ Downloaded chapter ${chapterId}`);

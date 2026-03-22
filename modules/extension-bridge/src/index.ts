@@ -103,8 +103,14 @@ class ExtensionBridgeAPI {
     return this.call(sourceId, 'getImageUrl', { pageIndex, pageUrl });
   }
 
-  async downloadPage(sourceId: string, imageUrl: string, destPath: string): Promise<void> {
-    await this.call(sourceId, 'downloadPage', { imageUrl, destPath });
+  async downloadPage(
+    sourceId: string,
+    imageUrl: string,
+    destPath: string,
+    quality?: number,
+    maxWidth?: number,
+  ): Promise<void> {
+    await this.call(sourceId, 'downloadPage', { imageUrl, destPath, quality, maxWidth });
   }
 }
 

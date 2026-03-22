@@ -30,6 +30,7 @@ import {
   useDeleteMangaDownloads,
 } from '@queries/downloads';
 import { useDownloadStore } from '@stores/downloadStore';
+import { useChapterDownloadInfo } from '@hooks/useChapterDownloadInfo';
 
 const THUMB_SIZE = 40;
 
@@ -65,18 +66,44 @@ interface DownloadRowProps {
 }
 
 function DownloadRow({
+  chapterId,
+  mangaId,
   chapterName,
   progress = 0,
   isActive = false,
   onDelete,
   isLastItem = false,
 }: DownloadRowProps) {
+  const { info: downloadInfo } = useChapterDownloadInfo(mangaId, chapterId);
+
+  const formatSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 10) / 10 + sizes[i];
+  };
+
+  const compressionLabel = downloadInfo
+    ? downloadInfo.isCompressed
+      ? `${downloadInfo.quality || 'Unknown'} Quality`
+      : 'Original Quality'
+    : null;
+
+  const sizeLabel = downloadInfo ? formatSize(downloadInfo.sizeBytes) : null;
+
   return (
     <View style={[styles.downloadRow, isLastItem && styles.downloadRowLast]}>
       <View style={styles.rowInfo}>
         <Text style={styles.chapterLabel} numberOfLines={1}>
           {chapterName}
         </Text>
+
+        {compressionLabel && sizeLabel && (
+          <Text style={styles.compressionLabel} numberOfLines={1}>
+            ({compressionLabel} - {sizeLabel})
+          </Text>
+        )}
 
         {isActive && (
           <View style={styles.progressContainer}>
@@ -543,6 +570,11 @@ const styles = StyleSheet.create({
   chapterLabel: {
     fontSize: typography.sizes.base,
     color: colors.text.primary,
+  },
+  compressionLabel: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.muted,
+    marginTop: spacing[1],
   },
   progressContainer: {
     flexDirection: 'row',
