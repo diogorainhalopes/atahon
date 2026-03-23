@@ -42,8 +42,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['System'],
-        display: ['System'],
+        sans: ['Geist-Regular'],
+        display: ['Geist-Bold'],
+        mono: ['Geist-Mono'],
       },
       borderRadius: {
         '4xl': '2rem',

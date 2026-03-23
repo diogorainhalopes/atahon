@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/colors';
+import { spacing } from '@theme/spacing';
 
 type ScreenProps = {
   children: ReactNode;
@@ -61,6 +62,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   padded: {
-    paddingHorizontal: 20,
+    paddingHorizontal: spacing[5],
   },
 });

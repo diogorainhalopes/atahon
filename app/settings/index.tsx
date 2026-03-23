@@ -10,7 +10,7 @@ import { Stack } from 'expo-router';
 import { Minus, Plus } from 'lucide-react-native';
 import { useSettingsStore } from '@stores/settingsStore';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 
 // ─── SegmentChooser ──────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wider,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   divider: {
@@ -315,12 +315,12 @@ const styles = StyleSheet.create({
   },
   segmentButtonText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.muted,
   },
   segmentButtonTextActive: {
     color: colors.background.DEFAULT,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
   },
 
   // Stepper
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   },
   stepperValue: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
     minWidth: 28,
     textAlign: 'center',

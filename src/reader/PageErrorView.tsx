@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 
 interface PageErrorViewProps {
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.secondary,
   },
   error: {
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: '#fff',
   },
 });

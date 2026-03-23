@@ -2,6 +2,8 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookOpen, Compass, Bell, Clock, MoreHorizontal } from 'lucide-react-native';
 import { colors } from '@theme/colors';
+import { typography, fontFamily } from '@theme/typography';
+import { radius, spacing } from '@theme/spacing';
 
 type Tab = {
   name: string; // relative route path
@@ -30,19 +32,19 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          left: 16,
-          right: 16,
+          left: spacing[4],
+          right: spacing[4],
           bottom: insets.bottom + 8,
-          borderRadius: 16,
-          height: 64,
+          borderRadius: radius.xl,
+          height: spacing[16],
           backgroundColor: colors.background.secondary,
           borderTopColor: colors.border.DEFAULT,
         },
         tabBarActiveTintColor: colors.accent.DEFAULT,
         tabBarInactiveTintColor: colors.text.muted,
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: typography.sizes.xs,
+          fontFamily: fontFamily.medium,
           marginTop: 2,
         },
       }}

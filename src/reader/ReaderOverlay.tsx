@@ -13,7 +13,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { spacing, radius } from '@theme/spacing';
 import { useReaderStore } from '@stores/readerStore';
 import { ReaderSettingsSheet } from './ReaderSettingsSheet';
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   },
   chapterName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
     textAlign: 'center',
   },
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   scrubberText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
     fontVariant: ['tabular-nums'],
     minWidth: 28,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
   bubbleLabel: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: '#fff',
     fontVariant: ['tabular-nums'],
   },

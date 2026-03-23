@@ -1,6 +1,6 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, Switch, View } from 'react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { useReaderStore, type ReadingMode, type ScaleType } from '@stores/readerStore';
 
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
     marginBottom: spacing[4],
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.secondary,
   },
   toggleRow: {
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.muted,
   },
   segmentTextActive: {

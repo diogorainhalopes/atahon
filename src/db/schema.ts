@@ -24,6 +24,8 @@ export const manga = sqliteTable('manga', {
   lastUpdatedAt: integer('last_updated_at'),
   initialized: integer('initialized', { mode: 'boolean' }).notNull().default(false),
   smartDownloads: integer('smart_downloads', { mode: 'boolean' }).notNull().default(false),
+  lastReadChapterId: integer('last_read_chapter_id'), // chapter.id
+  lastReadPage: integer('last_read_page').notNull().default(0), // page number in that chapter
   createdAt: integer('created_at').notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
   updatedAt: integer('updated_at').notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
 });

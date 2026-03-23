@@ -20,7 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import {
   useActiveDownloads,
@@ -31,6 +31,7 @@ import {
 } from '@queries/downloads';
 import { useDownloadStore } from '@stores/downloadStore';
 import { useChapterDownloadInfo } from '@hooks/useChapterDownloadInfo';
+import { useTotalDownloadsSize } from '@hooks/useTotalDownloadsSize';
 
 const THUMB_SIZE = 40;
 
@@ -187,6 +188,34 @@ function AnimatedDownloadRow(props: DownloadRowProps) {
   );
 }
 
+// ─── DownloadsSummary ────────────────────────────────────────────────
+
+interface DownloadsSummaryProps {
+  totalSize: number;
+  isLoading: boolean;
+}
+
+function DownloadsSummary({ totalSize, isLoading }: DownloadsSummaryProps) {
+  const formatSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 10) / 10 + ' ' + sizes[i];
+  };
+
+  return (
+    <View style={styles.summaryContainer}>
+      <Text style={styles.summaryLabel}>Total Size</Text>
+      {isLoading ? (
+        <ActivityIndicator size="small" color={colors.text.secondary} />
+      ) : (
+        <Text style={styles.summaryValue}>{formatSize(totalSize)}</Text>
+      )}
+    </View>
+  );
+}
+
 // ─── MangaSectionHeader ──────────────────────────────────────────────
 
 interface MangaSectionHeaderProps {
@@ -271,6 +300,16 @@ export default function DownloadsScreen() {
 
   const [collapsedMangaIds, setCollapsedMangaIds] = useState<Set<number>>(new Set());
   const [deletingMangaId, setDeletingMangaId] = useState<number | null>(null);
+
+  // Calculate total downloads size
+  const allDownloads = useMemo(
+    () => [
+      ...(activeDownloads?.map((d) => ({ mangaId: d.mangaId, chapterId: d.chapterId })) ?? []),
+      ...(completedDownloads?.map((d) => ({ mangaId: d.mangaId, chapterId: d.chapterId })) ?? []),
+    ],
+    [activeDownloads, completedDownloads],
+  );
+  const { totalSize, isLoading: isSizeLoading } = useTotalDownloadsSize(allDownloads);
 
   function toggleCollapse(mangaId: number) {
     setCollapsedMangaIds((prev) => {
@@ -445,6 +484,9 @@ export default function DownloadsScreen() {
         }}
       />
       <View style={styles.container}>
+        {hasDownloads && (
+          <DownloadsSummary totalSize={totalSize} isLoading={isSizeLoading} />
+        )}
         {hasDownloads ? (
           <SectionList
             sections={sections}
@@ -485,6 +527,28 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
   },
 
+  // Summary section
+  summaryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    backgroundColor: colors.background.elevated,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
+  },
+  summaryLabel: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+    fontFamily: fontFamily.medium,
+  },
+  summaryValue: {
+    fontSize: typography.sizes.base,
+    color: colors.text.primary,
+    fontFamily: fontFamily.semibold,
+  },
+
   // Section header (manga group)
   sectionHeader: {
     flexDirection: 'row',
@@ -522,7 +586,7 @@ const styles = StyleSheet.create({
   },
   sectionPlaceholderLetter: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
   },
   sectionInfo: {
@@ -531,7 +595,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
     flexShrink: 1,
     lineHeight: typography.lineHeights.snug,
@@ -597,7 +661,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: typography.sizes.xs,
     color: colors.accent.DEFAULT,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     minWidth: 35,
     textAlign: 'right',
   },

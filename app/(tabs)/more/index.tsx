@@ -9,9 +9,10 @@ import {
 import { useRouter } from 'expo-router';
 import { Puzzle, Download, Database, Settings, ChevronRight, Info } from 'lucide-react-native';
 import Screen from '@components/Screen';
+import PageHeader from '@components/PageHeader';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
-import { radius } from '@theme/spacing';
+import { typography, fontFamily } from '@theme/typography';
+import { radius, spacing } from '@theme/spacing';
 import { AboutModal } from '@components/AboutModal';
 
 // ─── MenuItem ────────────────────────────────────────────────────────────
@@ -43,10 +44,8 @@ export default function MoreScreen() {
 
   return (
     <>
-      <Screen>
-        <View style={styles.header}>
-          <Text style={styles.title}>More</Text>
-        </View>
+      <Screen padded={false}>
+        <PageHeader title="More" />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Content</Text>
@@ -91,26 +90,16 @@ export default function MoreScreen() {
 // ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  header: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.DEFAULT,
-  },
-  title: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
   content: {
-    padding: 16,
-    gap: 24,
+    padding: spacing[4],
+    gap: spacing[6],
   },
   section: {
-    gap: 8,
+    gap: spacing[2],
   },
   sectionTitle: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wider,
@@ -126,13 +115,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3.5],
   },
   menuItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing[3],
   },
   iconWrapper: {
     width: 36,
@@ -144,12 +133,12 @@ const styles = StyleSheet.create({
   },
   menuItemLabel: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   divider: {
     height: 1,
     backgroundColor: colors.border.subtle,
-    marginLeft: 64,
+    marginLeft: spacing[16],
   },
 });

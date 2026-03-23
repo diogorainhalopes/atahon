@@ -1,4 +1,4 @@
-import { asc, desc, eq } from 'drizzle-orm';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 import { db } from '@db/client';
 import {
   chapter,
@@ -65,6 +65,50 @@ export async function markChapterRead(chapterId: number): Promise<void> {
     .where(eq(chapter.id, chapterId));
 }
 
+export async function markChaptersRead(chapterIds: number[]): Promise<void> {
+  if (chapterIds.length === 0) return;
+  await db
+    .update(chapter)
+    .set({ read: true })
+    .where(inArray(chapter.id, chapterIds));
+}
+
+export async function markChaptersUnread(chapterIds: number[]): Promise<void> {
+  if (chapterIds.length === 0) return;
+  await db
+    .update(chapter)
+    .set({ read: false, lastPageRead: 0 })
+    .where(inArray(chapter.id, chapterIds));
+}
+
+export async function bulkUpsertHistory(chapterIds: number[], mangaId: number): Promise<void> {
+  if (chapterIds.length === 0) return;
+  const now = Math.floor(Date.now() / 1000);
+
+  const existing = await db
+    .select({ id: history.id, chapterId: history.chapterId })
+    .from(history)
+    .where(inArray(history.chapterId, chapterIds));
+
+  const existingChapterIds = new Set(existing.map((e) => e.chapterId));
+  const toInsert = chapterIds.filter((id) => !existingChapterIds.has(id));
+  const toUpdateIds = existing.map((e) => e.id);
+
+  if (toUpdateIds.length > 0) {
+    await db.update(history).set({ readAt: now }).where(inArray(history.id, toUpdateIds));
+  }
+  if (toInsert.length > 0) {
+    await db
+      .insert(history)
+      .values(toInsert.map((chapterId) => ({ chapterId, mangaId, readAt: now })));
+  }
+}
+
+export async function deleteHistoryForChapters(chapterIds: number[]): Promise<void> {
+  if (chapterIds.length === 0) return;
+  await db.delete(history).where(inArray(history.chapterId, chapterIds));
+}
+
 // ─── History queries ─────────────────────────────────────────────────────────
 
 export interface HistoryEntry {
@@ -93,7 +137,7 @@ export async function getReadingHistory(): Promise<HistoryEntry[]> {
     .from(history)
     .innerJoin(chapter, eq(history.chapterId, chapter.id))
     .innerJoin(manga, eq(history.mangaId, manga.id))
-    .orderBy(desc(history.readAt));
+    .orderBy(desc(history.readAt), desc(chapter.chapterNumber), desc(chapter.id));
 
   return rows;
 }

@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import type { Chapter } from '@db/schema';
 
@@ -81,11 +81,11 @@ const styles = StyleSheet.create({
   finishedLabel: {
     fontSize: typography.sizes.sm,
     color: colors.text.muted,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
   },
   chapterName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
   },
   divider: {
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
   targetLabel: {
     fontSize: typography.sizes.sm,
     color: colors.text.muted,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
   },
   targetName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.accent.DEFAULT,
   },
   navButton: {
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: '#fff',
   },
   noMoreText: {

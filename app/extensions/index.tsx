@@ -13,7 +13,7 @@ import { Stack, useRouter } from 'expo-router';
 import { ChevronRight, Search } from 'lucide-react-native';
 
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import type { ExtensionInfo } from '@/types/extensions';
 import {
@@ -252,12 +252,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
-    paddingBottom: spacing[2],
+    paddingBottom: spacing[1.5],
   },
   sectionTitle: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
+    textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wider,
   },
   row: {
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   },
   rowIconText: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
   },
   rowCenter: {
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
   },
   rowName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
     flexShrink: 1,
   },
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   },
   nsfwText: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: '#fff',
   },
   rowMeta: {
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
   },
   center: {
     flex: 1,

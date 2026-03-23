@@ -1,16 +1,18 @@
-import { Platform } from 'react-native';
-
-const systemFont = Platform.select({
-  ios: 'System',
-  android: 'Roboto',
-  default: 'System',
-});
+// Weight-specific Geist font families (registered as aliases in app/_layout.tsx)
+export const fontFamily = {
+  regular: 'Geist-Regular',
+  medium: 'Geist-Medium',
+  semibold: 'Geist-SemiBold',
+  bold: 'Geist-Bold',
+  extrabold: 'Geist-ExtraBold',
+  mono: 'Geist-Mono',
+} as const;
 
 export const typography = {
   fonts: {
-    sans: systemFont,
-    display: systemFont,
-    mono: Platform.select({ ios: 'Courier New', android: 'monospace', default: 'monospace' }),
+    sans: 'Geist-Regular',
+    display: 'Geist-Bold',
+    mono: 'Geist-Mono',
   },
   sizes: {
     xs: 11,

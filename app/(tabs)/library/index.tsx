@@ -13,9 +13,10 @@ import { BookOpen } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
-import { useLibraryManga, useLatestReadChapters } from '@queries/manga';
+import PageHeader from '@components/PageHeader';
+import { useLibraryManga, useLibraryChapterCounts } from '@queries/manga';
 import { useSettingsStore } from '@stores/settingsStore';
 import type { Manga } from '@db/schema';
 
@@ -27,17 +28,27 @@ const CARD_PADDING = spacing[3];
 
 function MangaCard({
   manga,
-  chapterLabel,
+  chapterCounts,
   onPress,
   width,
   height,
 }: {
   manga: Manga;
-  chapterLabel?: string;
+  chapterCounts?: { total: number; readCount: number };
   onPress: () => void;
   width: number;
   height: number;
 }) {
+  const progressPercentage = chapterCounts ? (chapterCounts.readCount / chapterCounts.total) * 100 : 0;
+  const progressColor =
+    !chapterCounts || chapterCounts.readCount === 0
+      ? undefined
+      : chapterCounts.readCount >= chapterCounts.total
+        ? manga.status === 2
+          ? colors.status.success // green — completed manga, all read
+          : colors.status.info // blue — caught up on ongoing
+        : colors.status.warning; // yellow — in progress
+
   return (
     <TouchableOpacity style={[styles.card, { width }]} onPress={onPress} activeOpacity={0.75}>
       <View style={[styles.cardImageBox, { width, height }]}>
@@ -54,9 +65,17 @@ function MangaCard({
             </Text>
           </View>
         )}
-        {chapterLabel && (
-          <View style={styles.ribbon}>
-            <Text style={styles.ribbonText}>{chapterLabel}</Text>
+        {progressColor && (
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${progressPercentage}%`,
+                  backgroundColor: progressColor,
+                },
+              ]}
+            />
           </View>
         )}
       </View>
@@ -71,13 +90,23 @@ function MangaCard({
 
 function ListItem({
   manga,
-  chapterLabel,
+  chapterCounts,
   onPress,
 }: {
   manga: Manga;
-  chapterLabel?: string;
+  chapterCounts?: { total: number; readCount: number };
   onPress: () => void;
 }) {
+  const progressPercentage = chapterCounts ? (chapterCounts.readCount / chapterCounts.total) * 100 : 0;
+  const progressColor =
+    !chapterCounts || chapterCounts.readCount === 0
+      ? undefined
+      : chapterCounts.readCount >= chapterCounts.total
+        ? manga.status === 2
+          ? colors.status.success // green — completed manga, all read
+          : colors.status.info // blue — caught up on ongoing
+        : colors.status.warning; // yellow — in progress
+
   return (
     <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.75}>
       <View style={styles.listItemImage}>
@@ -88,12 +117,24 @@ function ListItem({
             <Text style={styles.listItemPlaceholderLetter}>{manga.title.charAt(0).toUpperCase()}</Text>
           </View>
         )}
+        {progressColor && (
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${progressPercentage}%`,
+                  backgroundColor: progressColor,
+                },
+              ]}
+            />
+          </View>
+        )}
       </View>
       <View style={styles.listItemContent}>
         <Text style={styles.listItemTitle} numberOfLines={1}>
           {manga.title}
         </Text>
-        {chapterLabel && <Text style={styles.listItemChapter} numberOfLines={1}>{chapterLabel}</Text>}
       </View>
     </TouchableOpacity>
   );
@@ -106,7 +147,7 @@ export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const { data: libraryManga } = useLibraryManga();
   const mangaIds = useMemo(() => (libraryManga ?? []).map((m) => m.id), [libraryManga]);
-  const { data: readChapters } = useLatestReadChapters(mangaIds);
+  const { data: chapterCounts } = useLibraryChapterCounts(mangaIds);
 
   const gridSize = useSettingsStore((s) => s.gridSize);
   const libraryDisplayMode = useSettingsStore((s) => s.libraryDisplayMode);
@@ -120,35 +161,29 @@ export default function LibraryScreen() {
 
   const renderItem = useCallback(
     ({ item }: { item: Manga }) => {
-      const ch = readChapters?.[item.id];
-      const chapterLabel = ch
-        ? ch.chapterNumber != null
-          ? `Ch. ${ch.chapterNumber % 1 === 0 ? ch.chapterNumber.toFixed(0) : ch.chapterNumber}`
-          : ch.name
-        : undefined;
+      const counts = chapterCounts?.[item.id];
+      const progressData = counts ? { total: counts.total, readCount: counts.readCount } : undefined;
 
       if (libraryDisplayMode === 'list') {
-        return <ListItem manga={item} chapterLabel={chapterLabel} onPress={() => router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } })} />;
+        return <ListItem manga={item} chapterCounts={progressData} onPress={() => router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } })} />;
       }
 
       return (
         <MangaCard
           manga={item}
-          chapterLabel={chapterLabel}
+          chapterCounts={progressData}
           onPress={() => router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } })}
           width={cardWidth}
           height={cardHeight}
         />
       );
     },
-    [router, readChapters, libraryDisplayMode, cardWidth, cardHeight],
+    [router, chapterCounts, libraryDisplayMode, cardWidth, cardHeight],
   );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Library</Text>
-      </View>
+      <PageHeader title="Library" />
 
       <FlatList
         key={`${numColumns}-${libraryDisplayMode}`}
@@ -183,17 +218,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.DEFAULT,
   },
-  header: {
-    paddingHorizontal: CARD_PADDING,
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.DEFAULT,
-  },
-  title: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
   grid: {
     padding: CARD_PADDING,
   },
@@ -222,22 +246,20 @@ const styles = StyleSheet.create({
   },
   cardPlaceholderLetter: {
     fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
-  ribbon: {
+  progressTrack: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: colors.accent.DEFAULT,
-    borderRadius: radius.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    zIndex: 1,
   },
-  ribbonText: {
-    fontSize: 9,
-    fontWeight: typography.weights.bold,
-    color: '#fff',
+  progressFill: {
+    height: 3,
   },
   cardTitle: {
     marginTop: spacing[1],
@@ -256,7 +278,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,
@@ -296,7 +318,7 @@ const styles = StyleSheet.create({
   },
   listItemPlaceholderLetter: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
   listItemContent: {
@@ -305,7 +327,7 @@ const styles = StyleSheet.create({
   },
   listItemTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
   },
   listItemChapter: {

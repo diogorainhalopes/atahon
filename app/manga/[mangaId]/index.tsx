@@ -11,6 +11,12 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -30,9 +36,16 @@ import {
   AlertCircle,
   HardDrive,
   Zap,
+  Play,
+  Filter,
+  Circle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  X,
 } from 'lucide-react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import type { Chapter } from '@db/schema';
 import {
@@ -42,6 +55,8 @@ import {
   useFetchChapterList,
   useToggleLibrary,
   useToggleSmartDownloads,
+  useLastReadChapter,
+  useBulkMarkRead,
 } from '@queries/manga';
 import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
 import { useMergedExtensions, useRepos } from '@queries/extensions';
@@ -52,6 +67,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 280;
 const COVER_WIDTH = 120;
 const COVER_ASPECT = 1.42;
+const INDICATOR_WIDTH = 34;
+const ANIM_DURATION = 200;
 
 // ─── Status helpers ────────────────────────────────────────────────────────────
 
@@ -84,9 +101,23 @@ interface ChapterRowProps {
   sourceId: string;
   onPress: () => void;
   onDownload: () => void;
+  selected?: boolean;
+  isSelectionMode?: boolean;
+  onLongPress?: () => void;
+  onSelect?: () => void;
 }
 
-function ChapterRow({ chapter, onPress, onDownload, mangaTitle, sourceId }: ChapterRowProps) {
+function ChapterRow({
+  chapter,
+  onPress,
+  onDownload,
+  mangaTitle,
+  sourceId,
+  selected = false,
+  isSelectionMode = false,
+  onLongPress,
+  onSelect,
+}: ChapterRowProps) {
   const chapterLabel =
     chapter.chapterNumber != null && chapter.chapterNumber > 0
       ? `Chapter ${chapter.chapterNumber}`
@@ -96,6 +127,21 @@ function ChapterRow({ chapter, onPress, onDownload, mangaTitle, sourceId }: Chap
       ? `${chapterLabel} — ${chapter.name}`
       : chapterLabel
     : chapter.name;
+
+  // Selection indicator animation
+  const indicatorAnim = useSharedValue(isSelectionMode ? 1 : 0);
+
+  useEffect(() => {
+    indicatorAnim.value = withTiming(isSelectionMode ? 1 : 0, {
+      duration: ANIM_DURATION,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [isSelectionMode]);
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    width: indicatorAnim.value * INDICATOR_WIDTH,
+    overflow: 'hidden',
+  }));
 
   // Get live download progress from store
   const downloadItem = useDownloadStore((s) =>
@@ -129,7 +175,21 @@ function ChapterRow({ chapter, onPress, onDownload, mangaTitle, sourceId }: Chap
   };
 
   return (
-    <TouchableOpacity style={styles.chapterRow} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.chapterRow, selected && styles.chapterRowSelected]}
+      onPress={isSelectionMode ? onSelect : onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.7}
+    >
+      <Animated.View style={indicatorStyle}>
+        <View style={styles.selectionIndicator}>
+          {selected ? (
+            <CheckCircle2 size={24} color={colors.accent.DEFAULT} />
+          ) : (
+            <Circle size={24} color={colors.text.muted} />
+          )}
+        </View>
+      </Animated.View>
       <View style={styles.chapterInfo}>
         <Text
           style={[styles.chapterName, chapter.read && styles.chapterRead]}
@@ -149,15 +209,17 @@ function ChapterRow({ chapter, onPress, onDownload, mangaTitle, sourceId }: Chap
           ) : null}
         </View>
       </View>
-      {chapter.bookmark && <View style={styles.bookmarkDot} />}
-      <TouchableOpacity
-        onPress={onDownload}
-        hitSlop={8}
-        activeOpacity={0.7}
-        style={styles.downloadButton}
-      >
-        {getDownloadIcon()}
-      </TouchableOpacity>
+      {chapter.bookmark && !isSelectionMode && <View style={styles.bookmarkDot} />}
+      {!isSelectionMode && (
+        <TouchableOpacity
+          onPress={onDownload}
+          hitSlop={8}
+          activeOpacity={0.7}
+          style={styles.downloadButton}
+        >
+          {getDownloadIcon()}
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -181,11 +243,31 @@ export default function MangaDetailScreen() {
   const toggleSmartDownloads = useToggleSmartDownloads();
   const enqueueDownload = useEnqueueDownload();
   const bulkEnqueueDownload = useBulkEnqueueDownload();
+  const bulkMarkRead = useBulkMarkRead();
 
   // UI state
   const [sortAsc, setSortAsc] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [filterMode, setFilterMode] = useState<'all' | 'unread' | 'downloaded'>('all');
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [selectedChapterIds, setSelectedChapterIds] = useState<Set<number>>(new Set());
   const hasTriggeredFetch = useRef(false);
+  const isSelectionMode = selectedChapterIds.size > 0;
+
+  // Selection bar animation
+  const barAnim = useSharedValue(0);
+
+  useEffect(() => {
+    barAnim.value = withTiming(isSelectionMode ? 1 : 0, {
+      duration: ANIM_DURATION,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [isSelectionMode]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: (1 - barAnim.value) * 80 }],
+    opacity: barAnim.value,
+  }));
 
   // Settings
   const downloadOnWifiOnly = useSettingsStore((s) => s.downloadOnWifiOnly);
@@ -213,6 +295,9 @@ export default function MangaDetailScreen() {
     return null;
   }, [manga?.sourceId, extensions, repos]);
 
+  // Last read chapter (for continue reading FAB)
+  const { data: lastReadChapter } = useLastReadChapter(numericId);
+
   // Wi-Fi modal state
   const [wifiModalVisible, setWifiModalVisible] = useState(false);
   const pendingAction = useRef<(() => void) | null>(null);
@@ -238,6 +323,13 @@ export default function MangaDetailScreen() {
     if (!chapters) return [];
     return sortAsc ? [...chapters].reverse() : chapters;
   }, [chapters, sortAsc]);
+
+  // Filtered chapters
+  const filteredChapters = useMemo(() => {
+    if (filterMode === 'unread') return sortedChapters.filter((ch) => !ch.read);
+    if (filterMode === 'downloaded') return sortedChapters.filter((ch) => ch.downloadStatus === 3);
+    return sortedChapters;
+  }, [sortedChapters, filterMode]);
 
   // Refresh handler
   const isRefreshing = fetchDetails.isPending || fetchChapters.isPending;
@@ -330,6 +422,44 @@ export default function MangaDetailScreen() {
       });
     }
   }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
+
+  // Selection handlers
+  const handleLongPressChapter = useCallback((chapterId: number) => {
+    setSelectedChapterIds(new Set([chapterId]));
+  }, []);
+
+  const handleSelectChapter = useCallback((chapterId: number) => {
+    setSelectedChapterIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(chapterId)) next.delete(chapterId);
+      else next.add(chapterId);
+      return next;
+    });
+  }, []);
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedChapterIds(new Set());
+  }, []);
+
+  const handleMarkSelectedRead = useCallback(() => {
+    if (!manga || selectedChapterIds.size === 0) return;
+    bulkMarkRead.mutate({
+      chapterIds: [...selectedChapterIds],
+      read: true,
+      mangaId: manga.id,
+    });
+    setSelectedChapterIds(new Set());
+  }, [manga, selectedChapterIds, bulkMarkRead]);
+
+  const handleMarkSelectedUnread = useCallback(() => {
+    if (!manga || selectedChapterIds.size === 0) return;
+    bulkMarkRead.mutate({
+      chapterIds: [...selectedChapterIds],
+      read: false,
+      mangaId: manga.id,
+    });
+    setSelectedChapterIds(new Set());
+  }, [manga, selectedChapterIds, bulkMarkRead]);
 
   // Parse genres
   const genres = useMemo(() => {
@@ -521,7 +651,7 @@ export default function MangaDetailScreen() {
         {/* Chapter list header */}
         <View style={styles.chapterHeader}>
           <Text style={styles.chapterCount}>
-            {chapters?.length ?? 0} Chapters
+            {filteredChapters.length}{filterMode !== 'all' ? ` / ${chapters?.length ?? 0}` : ''} Chapters
           </Text>
           <View style={styles.chapterActions}>
             {chapters && chapters.length > 0 && chapters.some((ch) => ch.downloadStatus === 0) && (
@@ -552,6 +682,16 @@ export default function MangaDetailScreen() {
                 />
               </TouchableOpacity>
             )}
+            <TouchableOpacity
+              onPress={() => setFilterModalVisible(true)}
+              activeOpacity={0.7}
+              hitSlop={8}
+            >
+              <Filter
+                size={18}
+                color={filterMode !== 'all' ? colors.accent.DEFAULT : colors.text.secondary}
+              />
+            </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setSortAsc((v) => !v)}
               activeOpacity={0.7}
@@ -596,16 +736,30 @@ export default function MangaDetailScreen() {
         mangaId={mangaId}
         mangaTitle={manga?.title ?? ''}
         sourceId={manga?.sourceId ?? ''}
+        selected={selectedChapterIds.has(item.id)}
+        isSelectionMode={isSelectionMode}
         onPress={() =>
           router.push({
             pathname: '/manga/[mangaId]/reader/[chapterId]',
             params: { mangaId, chapterId: item.id },
           })
         }
+        onLongPress={() => handleLongPressChapter(item.id)}
+        onSelect={() => handleSelectChapter(item.id)}
         onDownload={() => handleDownloadChapter(item)}
       />
     ),
-    [mangaId, manga?.title, manga?.sourceId, router, handleDownloadChapter],
+    [
+      mangaId,
+      manga?.title,
+      manga?.sourceId,
+      router,
+      handleDownloadChapter,
+      selectedChapterIds,
+      isSelectionMode,
+      handleLongPressChapter,
+      handleSelectChapter,
+    ],
   );
 
   // Loading state
@@ -625,12 +779,14 @@ export default function MangaDetailScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
         <FlashList
-          data={sortedChapters}
+          data={filteredChapters}
           renderItem={renderChapter}
           keyExtractor={(item) => String(item.id)}
           ListHeaderComponent={renderHeader}
           getItemType={() => 'chapter'}
-          contentContainerStyle={{ paddingBottom: insets.bottom + spacing[4] }}
+          contentContainerStyle={{
+            paddingBottom: isSelectionMode ? insets.bottom + 80 : insets.bottom + spacing[4],
+          }}
           showsVerticalScrollIndicator={false}
         />
 
@@ -644,6 +800,57 @@ export default function MangaDetailScreen() {
             <ArrowLeft size={20} color={colors.text.primary} />
           </View>
         </Pressable>
+
+        {/* Continue Reading FAB */}
+        {lastReadChapter && !isSelectionMode && (
+          <Pressable
+            style={[styles.continueBtn, { bottom: insets.bottom + spacing[4] }]}
+            onPress={() =>
+              router.push({
+                pathname: '/manga/[mangaId]/reader/[chapterId]',
+                params: { mangaId, chapterId: lastReadChapter.id },
+              })
+            }
+            hitSlop={12}
+          >
+            <Play size={24} color="#fff" fill="#fff" />
+          </Pressable>
+        )}
+
+        {/* Selection Action Bar */}
+        <Animated.View
+          style={[styles.selectionBar, { bottom: insets.bottom }, barStyle]}
+          pointerEvents={isSelectionMode ? 'auto' : 'none'}
+        >
+          <TouchableOpacity
+            onPress={handleClearSelection}
+            hitSlop={8}
+            style={styles.selectionClose}
+          >
+            <X size={20} color={colors.text.secondary} />
+          </TouchableOpacity>
+          <Text style={styles.selectionCount}>
+            {selectedChapterIds.size} selected
+          </Text>
+          <View style={styles.selectionActions}>
+            <TouchableOpacity
+              style={styles.selectionBtn}
+              onPress={handleMarkSelectedUnread}
+              activeOpacity={0.7}
+            >
+              <EyeOff size={18} color={colors.text.primary} />
+              <Text style={styles.selectionBtnText}>Unread</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.selectionBtn, styles.selectionBtnAccent]}
+              onPress={handleMarkSelectedRead}
+              activeOpacity={0.7}
+            >
+              <Eye size={18} color="#fff" />
+              <Text style={styles.selectionBtnTextAccent}>Read</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
 
       {/* Wi-Fi Only Modal */}
@@ -692,6 +899,44 @@ export default function MangaDetailScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setFilterModalVisible(false)}>
+          <View style={styles.filterBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.filterModal}>
+                <View style={styles.filterHeader}>
+                  <Text style={styles.filterTitle}>Filter Chapters</Text>
+                </View>
+                {(['all', 'unread', 'downloaded'] as const).map((mode) => (
+                  <TouchableOpacity
+                    key={mode}
+                    style={styles.filterOption}
+                    onPress={() => {
+                      setFilterMode(mode);
+                      setFilterModalVisible(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.filterOptionText}>
+                      {mode === 'all' ? 'No Filter' : mode === 'unread' ? 'Unread' : 'Downloaded'}
+                    </Text>
+                    {filterMode === mode && (
+                      <CheckCircle size={18} color={colors.accent.DEFAULT} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </>
   );
 }
@@ -719,10 +964,28 @@ const styles = StyleSheet.create({
   backBtnBg: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Continue Reading FAB
+  continueBtn: {
+    position: 'absolute',
+    right: spacing[4],
+    zIndex: 10,
+    width: 56,
+    height: 56,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
   },
 
   // Cover area
@@ -750,7 +1013,7 @@ const styles = StyleSheet.create({
   },
   coverPlaceholderText: {
     fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
 
@@ -762,7 +1025,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
     lineHeight: typography.lineHeights.snug,
   },
@@ -778,7 +1041,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
   },
   description: {
     fontSize: typography.sizes.sm,
@@ -788,7 +1051,7 @@ const styles = StyleSheet.create({
   expandHint: {
     fontSize: typography.sizes.sm,
     color: colors.accent.DEFAULT,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     marginTop: 2,
   },
   sourceContainer: {
@@ -803,7 +1066,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   sourceLabel: {
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.secondary,
   },
   sourceRepo: {
@@ -823,7 +1086,7 @@ const styles = StyleSheet.create({
   },
   genreText: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.accent.DEFAULT,
   },
 
@@ -849,7 +1112,7 @@ const styles = StyleSheet.create({
   },
   libraryBtnText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.secondary,
   },
   libraryBtnTextActive: {
@@ -868,7 +1131,7 @@ const styles = StyleSheet.create({
   },
   chapterCount: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
   },
   chapterActions: {
@@ -906,7 +1169,7 @@ const styles = StyleSheet.create({
   },
   chapterName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   chapterRead: {
@@ -942,7 +1205,7 @@ const styles = StyleSheet.create({
   downloadProgress: {
     fontSize: typography.sizes.xs,
     color: colors.accent.DEFAULT,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
   },
 
   // Wi-Fi modal
@@ -958,6 +1221,8 @@ const styles = StyleSheet.create({
     borderRadius: radius['2xl'],
     width: '100%',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
   },
   wifiHeader: {
     padding: spacing[4],
@@ -966,7 +1231,7 @@ const styles = StyleSheet.create({
   },
   wifiTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   wifiBody: {
@@ -991,7 +1256,7 @@ const styles = StyleSheet.create({
   },
   wifiCancelText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.secondary,
   },
   wifiConfirmBtn: {
@@ -1001,8 +1266,48 @@ const styles = StyleSheet.create({
   },
   wifiConfirmText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.accent.DEFAULT,
+  },
+
+  // Filter modal
+  filterBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing[5],
+  },
+  filterModal: {
+    backgroundColor: colors.background.card,
+    borderRadius: radius['2xl'],
+    width: '100%',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
+  filterHeader: {
+    padding: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.DEFAULT,
+  },
+  filterTitle: {
+    fontSize: typography.sizes.lg,
+    fontFamily: fontFamily.bold,
+    color: colors.text.primary,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border.subtle,
+  },
+  filterOptionText: {
+    fontSize: typography.sizes.base,
+    fontFamily: fontFamily.medium,
+    color: colors.text.primary,
   },
 
   // Smart Downloads button
@@ -1022,10 +1327,79 @@ const styles = StyleSheet.create({
   },
   smartDlText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.muted,
   },
   smartDlTextActive: {
     color: colors.accent.DEFAULT,
+  },
+
+  // Selection indicator
+  selectionIndicator: {
+    width: INDICATOR_WIDTH,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Chapter row selected state
+  chapterRowSelected: {
+    backgroundColor: colors.accent.DEFAULT + '15',
+  },
+
+  // Selection action bar
+  selectionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.DEFAULT,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    gap: spacing[3],
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  selectionClose: {
+    padding: spacing[1],
+  },
+  selectionCount: {
+    flex: 1,
+    fontSize: typography.sizes.base,
+    fontFamily: fontFamily.semibold,
+    color: colors.text.primary,
+  },
+  selectionActions: {
+    flexDirection: 'row',
+    gap: spacing[2],
+  },
+  selectionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1.5],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+  },
+  selectionBtnAccent: {
+    backgroundColor: colors.accent.DEFAULT,
+    borderColor: colors.accent.DEFAULT,
+  },
+  selectionBtnText: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.medium,
+    color: colors.text.primary,
+  },
+  selectionBtnTextAccent: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.medium,
+    color: '#fff',
   },
 });

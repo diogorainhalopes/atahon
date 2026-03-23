@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { useInstalledExtensions, useUninstallExtension } from '@queries/extensions';
 import { useSourceStore } from '@stores/sourceStore';
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   },
   headerIconText: {
     fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
   },
   headerInfo: {
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   },
   headerName: {
     fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   headerMeta: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   bulkBtnText: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.accent.DEFAULT,
   },
   bulkBtnTextDisabled: {
@@ -273,9 +273,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
-    letterSpacing: 1,
+    letterSpacing: typography.letterSpacing.wider,
   },
   card: {
     backgroundColor: colors.background.card,
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   sourceName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
     flexShrink: 1,
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   nsfwText: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: '#fff',
   },
   separator: {
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   },
   uninstallText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.status.error,
   },
 });

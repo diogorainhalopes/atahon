@@ -1,9 +1,10 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Screen from '@components/Screen';
+import PageHeader from '@components/PageHeader';
 import { Compass, ChevronRight, Puzzle, ToggleRight } from 'lucide-react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { useInstalledExtensions } from '@queries/extensions';
 import { useSourceStore } from '@stores/sourceStore';
@@ -61,10 +62,8 @@ export default function BrowseScreen() {
   // No extensions installed at all
   if (!isLoading && allSources.length === 0) {
     return (
-      <Screen>
-        <View style={styles.header}>
-          <Text style={styles.title}>Browse</Text>
-        </View>
+      <Screen padded={false}>
+        <PageHeader title="Browse" />
         <View style={styles.empty}>
           <Compass size={64} color={colors.text.muted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>No sources installed</Text>
@@ -87,10 +86,8 @@ export default function BrowseScreen() {
   // Extensions installed but no sources enabled
   if (!isLoading && enabledSources.length === 0) {
     return (
-      <Screen>
-        <View style={styles.header}>
-          <Text style={styles.title}>Browse</Text>
-        </View>
+      <Screen padded={false}>
+        <PageHeader title="Browse" />
         <View style={styles.empty}>
           <ToggleRight size={64} color={colors.text.muted} strokeWidth={1.5} />
           <Text style={styles.emptyTitle}>No sources enabled</Text>
@@ -111,10 +108,8 @@ export default function BrowseScreen() {
   }
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Browse</Text>
-      </View>
+    <Screen padded={false}>
+      <PageHeader title="Browse" />
       <FlatList
         data={enabledSources}
         keyExtractor={(item) => item.source.id}
@@ -135,16 +130,6 @@ export default function BrowseScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  header: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.subtle,
-  },
-  title: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
   listContent: {
     paddingVertical: spacing[2],
   },
@@ -167,7 +152,7 @@ const styles = StyleSheet.create({
   },
   sourceIconText: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
   },
   sourceInfo: {
@@ -176,7 +161,7 @@ const styles = StyleSheet.create({
   },
   sourceName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   sourceMeta: {
@@ -196,7 +181,7 @@ const styles = StyleSheet.create({
   },
   latestText: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.accent.DEFAULT,
   },
   separator: {
@@ -213,7 +198,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,
@@ -235,7 +220,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.inverse,
   },
 });

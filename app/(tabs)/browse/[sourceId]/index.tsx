@@ -15,7 +15,7 @@ import { ChevronLeft, Search, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import type { SManga } from '@/types/extensions';
 import { Logger } from '@utils/logger';
@@ -285,10 +285,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing[2],
+    paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: colors.border.subtle,
+    borderBottomColor: colors.border.DEFAULT,
     gap: spacing[1],
   },
   backBtn: {
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   searchBar: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.muted,
   },
   tabTextActive: {
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   cardPlaceholderLetter: {
     fontSize: typography.sizes['3xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
   ribbon: {
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   ribbonText: {
     fontSize: 9,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: '#fff',
   },
   cardTitle: {
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.status.error,
   },
   errorDetail: {
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: '#fff',
   },
 });

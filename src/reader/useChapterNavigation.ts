@@ -9,6 +9,7 @@ import {
   markChapterRead,
   upsertHistory,
 } from '@db/queries/reader';
+import { updateMangaLastRead } from '@db/queries/manga';
 import { deleteDownloadEntry } from '@db/queries/downloads';
 import { deleteChapterFiles } from '@utils/downloadPaths';
 
@@ -55,11 +56,16 @@ export function useChapterNavigation({
       clearTimeout(debounceTimer.current);
       if (!anonymousMode && pendingPage.current >= 0 && pendingPage.current !== lastSavedPage.current) {
         saveReadingProgress(chapterId, pendingPage.current).catch(() => {});
+        updateMangaLastRead(mangaId, chapterId, pendingPage.current)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: [...mangaKeys.detail(mangaId), 'lastRead'] });
+          })
+          .catch(() => {});
       }
     };
     // chapterId is stable per mount (from route params)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [anonymousMode]);
+  }, [anonymousMode, chapterId, mangaId, queryClient]);
 
   const saveProgress = useCallback(
     (pageIndex: number) => {
@@ -69,10 +75,15 @@ export function useChapterNavigation({
         if (!anonymousMode && pageIndex !== lastSavedPage.current) {
           lastSavedPage.current = pageIndex;
           saveReadingProgress(chapterId, pageIndex).catch(() => {});
+          updateMangaLastRead(mangaId, chapterId, pageIndex)
+            .then(() => {
+              queryClient.invalidateQueries({ queryKey: [...mangaKeys.detail(mangaId), 'lastRead'] });
+            })
+            .catch(() => {});
         }
       }, DEBOUNCE_MS);
     },
-    [chapterId, anonymousMode],
+    [chapterId, mangaId, anonymousMode, queryClient],
   );
 
   const markRead = useCallback(() => {
@@ -112,11 +123,16 @@ export function useChapterNavigation({
       clearTimeout(debounceTimer.current);
       if (lastSavedPage.current >= 0) {
         saveReadingProgress(chapterId, lastSavedPage.current).catch(() => {});
+        updateMangaLastRead(mangaId, chapterId, lastSavedPage.current)
+          .then(() => {
+            queryClient.invalidateQueries({ queryKey: [...mangaKeys.detail(mangaId), 'lastRead'] });
+          })
+          .catch(() => {});
       }
 
       router.replace(`/manga/${mangaId}/reader/${targetChapterId}`);
     },
-    [router, mangaId, chapterId],
+    [router, mangaId, chapterId, queryClient],
   );
 
   return {

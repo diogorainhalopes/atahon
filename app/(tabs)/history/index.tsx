@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Clock, Trash2 } from 'lucide-react-native';
+import PageHeader from '@components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import {
   useReadingHistory,
@@ -189,14 +190,16 @@ export default function HistoryScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>History</Text>
-        {hasHistory && (
-          <TouchableOpacity onPress={handleClearAll} hitSlop={8}>
-            <Trash2 size={20} color={colors.text.muted} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <PageHeader
+        title="History"
+        right={
+          hasHistory ? (
+            <TouchableOpacity onPress={handleClearAll} hitSlop={8}>
+              <Trash2 size={20} color={colors.text.muted} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {hasHistory ? (
         <SectionList
@@ -229,21 +232,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.DEFAULT,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.DEFAULT,
-  },
-  title: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
-
   // Section headers
   sectionHeader: {
     paddingHorizontal: spacing[4],
@@ -253,10 +241,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
 
   // Row
@@ -285,11 +273,11 @@ const styles = StyleSheet.create({
   },
   rowInfo: {
     flex: 1,
-    gap: 2,
+    gap: spacing[0.5],
   },
   mangaTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   chapterLabel: {
@@ -305,11 +293,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing[3],
   },
   emptyTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,

@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'rea
 import Constants from 'expo-constants';
 import { X } from 'lucide-react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 
 interface AboutModalProps {
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   content: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
     marginBottom: spacing[2],
   },
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.accent.DEFAULT,
     marginBottom: spacing[2],
   },

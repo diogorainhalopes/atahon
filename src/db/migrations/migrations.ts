@@ -32,6 +32,13 @@ export const migrationJournal = {
       tag: '0002_repo_url_full',
       breakpoints: true,
     },
+    {
+      idx: 3,
+      version: '7',
+      when: 1700000003000,
+      tag: '0003_last_read_tracking',
+      breakpoints: true,
+    },
   ],
 };
 
@@ -130,6 +137,10 @@ export const migrationStatements = {
   `,
   '0002_repo_url_full': `
     UPDATE extension_repo SET url = url || '/index.min.json' WHERE url NOT LIKE '%/index.min.json';
+  `,
+  '0003_last_read_tracking': `
+    ALTER TABLE manga ADD COLUMN last_read_chapter_id INTEGER;
+    ALTER TABLE manga ADD COLUMN last_read_page INTEGER DEFAULT 0 NOT NULL;
   `,
 };
 

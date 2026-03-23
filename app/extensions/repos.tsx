@@ -16,7 +16,7 @@ import { Trash2, Clipboard, Send, RotateCcw } from 'lucide-react-native';
 import * as ClipboardModule from 'expo-clipboard';
 
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import type { ExtensionRepo } from '@db/schema';
 import {
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   addTitle: {
     fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.primary,
   },
   inputRow: {
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: '#fff',
   },
   listContent: {
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
     letterSpacing: typography.letterSpacing.wider,
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   repoName: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   repoNameDisabled: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   clearBtnText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: '#fff',
   },
   // Modal styles
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   modalBody: {
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   modalWarning: {
     fontSize: typography.sizes.sm,
     color: colors.status.error,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
   },
   modalActions: {
     flexDirection: 'row',
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.secondary,
   },
   modalDeleteBtn: {
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   modalDeleteText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.status.error,
   },
 });

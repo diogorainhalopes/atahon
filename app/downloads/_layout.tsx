@@ -1,19 +1,12 @@
 import { Stack } from 'expo-router';
-import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { defaultStackScreenOptions } from '@theme/commonStyles';
 
 export default function DownloadsLayout() {
   return (
     <Stack
       screenOptions={{
+        ...defaultStackScreenOptions,
         headerShown: true,
-        headerStyle: { backgroundColor: colors.background.DEFAULT },
-        headerTintColor: colors.text.primary,
-        headerTitleStyle: {
-          fontSize: typography.sizes.lg,
-          fontWeight: typography.weights.semibold,
-        },
-        headerShadowVisible: false,
         animation: 'slide_from_right',
       }}
     />

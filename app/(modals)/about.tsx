@@ -10,7 +10,7 @@ import Constants from 'expo-constants';
 import { X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 
 export default function AboutScreen() {
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.primary,
   },
   content: {
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.accent.DEFAULT,
   },
   version: {
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.accent.DEFAULT,
   },
   cardDescription: {

@@ -6,7 +6,7 @@ import PagerView from 'react-native-pager-view';
 import type { FlashListRef } from '@shopify/flash-list';
 import { ChevronLeft } from 'lucide-react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { useReaderStore } from '@stores/readerStore';
 import { useChapterData } from '@queries/reader';
 import { useMangaDetail } from '@queries/manga';
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: typography.sizes.base,
     color: colors.text.primary,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
   },
   pageIndicator: {
     position: 'absolute',

@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, or } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, or, sql } from 'drizzle-orm';
 import { db } from '@db/client';
 import { manga, chapter, type Manga, type Chapter } from '@db/schema';
 import type { SChapter } from '@/types/extensions';
@@ -114,6 +114,54 @@ export async function getLatestReadChapters(
   return result;
 }
 
+export async function updateMangaLastRead(
+  mangaId: number,
+  chapterId: number,
+  pageNumber: number,
+): Promise<void> {
+  await db
+    .update(manga)
+    .set({
+      lastReadChapterId: chapterId,
+      lastReadPage: pageNumber,
+    })
+    .where(eq(manga.id, mangaId));
+}
+
+export async function getLastReadChapterForResume(
+  mangaId: number,
+): Promise<{ id: number; name: string; chapterNumber: number | null; lastPageRead: number } | null> {
+  // Get the manga's stored last read chapter
+  const mangaRow = await db
+    .select({
+      lastReadChapterId: manga.lastReadChapterId,
+      lastReadPage: manga.lastReadPage,
+    })
+    .from(manga)
+    .where(eq(manga.id, mangaId))
+    .limit(1);
+
+  if (!mangaRow[0]?.lastReadChapterId) return null;
+
+  // Fetch the chapter details
+  const chapterRow = await db
+    .select({
+      id: chapter.id,
+      name: chapter.name,
+      chapterNumber: chapter.chapterNumber,
+    })
+    .from(chapter)
+    .where(eq(chapter.id, mangaRow[0].lastReadChapterId))
+    .limit(1);
+
+  if (!chapterRow[0]) return null;
+
+  return {
+    ...chapterRow[0],
+    lastPageRead: mangaRow[0].lastReadPage,
+  };
+}
+
 // ─── Updates (new chapters for library manga) ───────────────────────────────
 
 export interface UpdateEntry {
@@ -198,4 +246,34 @@ export async function upsertChaptersFromSource(
     .select()
     .from(chapter)
     .where(and(eq(chapter.mangaId, mangaId), inArray(chapter.sourceUrl, newUrls)));
+}
+
+// ─── Library chapter counts ────────────────────────────────────────────────
+
+export interface ChapterCount {
+  mangaId: number;
+  total: number;
+  readCount: number;
+}
+
+export async function getLibraryChapterCounts(
+  mangaIds: number[],
+): Promise<Record<number, ChapterCount>> {
+  if (mangaIds.length === 0) return {};
+
+  const rows = await db
+    .select({
+      mangaId: chapter.mangaId,
+      total: sql<number>`COUNT(*)`,
+      readCount: sql<number>`SUM(CASE WHEN ${chapter.read} THEN 1 ELSE 0 END)`,
+    })
+    .from(chapter)
+    .where(inArray(chapter.mangaId, mangaIds))
+    .groupBy(chapter.mangaId);
+
+  const result: Record<number, ChapterCount> = {};
+  for (const row of rows) {
+    result[row.mangaId] = row;
+  }
+  return result;
 }

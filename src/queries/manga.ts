@@ -1,21 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import ExtensionBridge from 'extension-bridge';
-import { getMangaById, getChaptersForManga } from '@db/queries/reader';
+import {
+  getMangaById,
+  getChaptersForManga,
+  markChaptersRead,
+  markChaptersUnread,
+  bulkUpsertHistory,
+  deleteHistoryForChapters,
+} from '@db/queries/reader';
 import {
   getLibraryManga,
   getLibrarySourceUrls,
   getLatestReadChapters,
+  getLastReadChapterForResume,
   getLibraryUpdates,
   updateMangaDetails,
   upsertChaptersFromSource,
   toggleMangaInLibrary,
   setMangaSmartDownloads,
+  getLibraryChapterCounts,
+  updateMangaLastRead,
   type UpdateEntry,
+  type ChapterCount,
 } from '@db/queries/manga';
 import type { Manga } from '@db/schema';
 import { bulkEnqueueChapters } from '@db/queries/downloads';
 import { useDownloadStore } from '@stores/downloadStore';
 import { startWorker } from '@utils/downloadWorker';
+import { historyKeys } from '@queries/history';
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -25,6 +37,7 @@ export const mangaKeys = {
   updates: () => [...mangaKeys.all, 'updates'] as const,
   detail: (id: number) => [...mangaKeys.all, 'detail', id] as const,
   chapters: (mangaId: number) => [...mangaKeys.all, 'chapters', mangaId] as const,
+  chapterCounts: () => [...mangaKeys.library(), 'chapterCounts'] as const,
 };
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -65,6 +78,23 @@ export function useLatestReadChapters(mangaIds: number[]) {
     queryFn: () => getLatestReadChapters(mangaIds),
     enabled: mangaIds.length > 0,
     staleTime: 0, // always refetch on tab switch so ribbons reflect latest reading
+  });
+}
+
+export function useLibraryChapterCounts(mangaIds: number[]) {
+  return useQuery<Record<number, ChapterCount>>({
+    queryKey: mangaKeys.chapterCounts(),
+    queryFn: () => getLibraryChapterCounts(mangaIds),
+    enabled: mangaIds.length > 0,
+    staleTime: 0,
+  });
+}
+
+export function useLastReadChapter(mangaId: number) {
+  return useQuery({
+    queryKey: [...mangaKeys.detail(mangaId), 'lastRead'],
+    queryFn: () => getLastReadChapterForResume(mangaId),
+    staleTime: 0,
   });
 }
 
@@ -192,6 +222,70 @@ export function useToggleSmartDownloads() {
     },
     onSuccess: ({ mangaId }) => {
       queryClient.invalidateQueries({ queryKey: mangaKeys.detail(mangaId) });
+    },
+  });
+}
+
+export function useBulkMarkRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      chapterIds,
+      read,
+      mangaId,
+    }: {
+      chapterIds: number[];
+      read: boolean;
+      mangaId: number;
+    }) => {
+      if (read) {
+        await markChaptersRead(chapterIds);
+        await bulkUpsertHistory(chapterIds, mangaId);
+      } else {
+        await markChaptersUnread(chapterIds);
+        await deleteHistoryForChapters(chapterIds);
+      }
+      return mangaId;
+    },
+    onSuccess: (mangaId) => {
+      // Chapter list in manga detail
+      queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+      // Manga detail page data
+      queryClient.invalidateQueries({ queryKey: mangaKeys.detail(mangaId) });
+      // Updates tab
+      queryClient.invalidateQueries({ queryKey: mangaKeys.updates() });
+      // Continue Reading FAB (useLastReadChapter key)
+      queryClient.invalidateQueries({ queryKey: [...mangaKeys.detail(mangaId), 'lastRead'] });
+      // Library ribbons — specifically invalidate latestRead queries
+      queryClient.invalidateQueries({ queryKey: [...mangaKeys.library(), 'latestRead'], exact: false });
+      // Library chapter counts (for progress bars)
+      queryClient.invalidateQueries({ queryKey: mangaKeys.chapterCounts() });
+      // History tab
+      queryClient.invalidateQueries({ queryKey: historyKeys.all });
+    },
+  });
+}
+
+export function useUpdateLastRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      mangaId,
+      chapterId,
+      pageNumber,
+    }: {
+      mangaId: number;
+      chapterId: number;
+      pageNumber: number;
+    }) => {
+      await updateMangaLastRead(mangaId, chapterId, pageNumber);
+      return mangaId;
+    },
+    onSuccess: (mangaId) => {
+      // Invalidate the continue reading query
+      queryClient.invalidateQueries({ queryKey: [...mangaKeys.detail(mangaId), 'lastRead'] });
     },
   });
 }

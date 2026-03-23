@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, Geist_800ExtraBold } from '@expo-google-fonts/geist';
+import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -28,7 +30,15 @@ export const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  const [ready, setReady] = useState(false);
+  const [fontsLoaded, fontError] = useFonts({
+    'Geist-Regular': Geist_400Regular,
+    'Geist-Medium': Geist_500Medium,
+    'Geist-SemiBold': Geist_600SemiBold,
+    'Geist-Bold': Geist_700Bold,
+    'Geist-ExtraBold': Geist_800ExtraBold,
+    'Geist-Mono': GeistMono_400Regular,
+  });
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     async function prepare() {
@@ -57,8 +67,7 @@ export default function RootLayout() {
       } catch (e) {
         Logger.error('Boot', 'Prepare failed:', e);
       } finally {
-        setReady(true);
-        await SplashScreen.hideAsync();
+        setAppReady(true);
       }
     }
 
@@ -70,7 +79,14 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!ready) return null;
+  // Hide splash once both app and fonts are ready
+  useEffect(() => {
+    if (appReady && (fontsLoaded || fontError)) {
+      SplashScreen.hideAsync();
+    }
+  }, [appReady, fontsLoaded, fontError]);
+
+  if (!appReady || (!fontsLoaded && !fontError)) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

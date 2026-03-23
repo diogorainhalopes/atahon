@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Bell } from 'lucide-react-native';
+import PageHeader from '@components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { useLibraryUpdates } from '@queries/manga';
 import type { UpdateEntry } from '@db/queries/manga';
@@ -160,9 +161,7 @@ export default function UpdatesScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Updates</Text>
-      </View>
+      <PageHeader title="Updates" />
 
       {hasUpdates ? (
         <SectionList
@@ -195,18 +194,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.DEFAULT,
   },
-  header: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[4],
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border.DEFAULT,
-  },
-  title: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
-
   // Section headers
   sectionHeader: {
     paddingHorizontal: spacing[4],
@@ -216,10 +203,10 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: typography.letterSpacing.wide,
   },
 
   // Row
@@ -246,16 +233,16 @@ const styles = StyleSheet.create({
   },
   placeholderLetter: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
   rowInfo: {
     flex: 1,
-    gap: 2,
+    gap: spacing[0.5],
   },
   mangaTitle: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.medium,
+    fontFamily: fontFamily.medium,
     color: colors.text.primary,
   },
   chapterLabel: {
@@ -277,14 +264,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing[3],
   },
   emptyTitle: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.text.secondary,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: spacing[2],
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
