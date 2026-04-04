@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookOpen, Compass, Bell, Clock, MoreHorizontal } from 'lucide-react-native';
 import { colors } from '@theme/colors';
@@ -23,8 +24,12 @@ function TabIcon({ icon: Icon, color, size }: { icon: React.ElementType; color: 
   return <Icon size={size} color={color} strokeWidth={2} />;
 }
 
+const MAX_TAB_BAR_WIDTH = 560;
+
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
+  const horizontalInset = Math.max(spacing[4], (screenWidth - MAX_TAB_BAR_WIDTH) / 2);
 
   return (
     <Tabs
@@ -32,13 +37,19 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          left: spacing[4],
-          right: spacing[4],
+          left: horizontalInset,
+          right: horizontalInset,
           bottom: insets.bottom + 8,
           borderRadius: radius.xl,
           height: spacing[16],
           backgroundColor: colors.background.secondary,
           borderTopColor: colors.border.DEFAULT,
+          paddingTop: 0,
+          paddingBottom: 0,
+        },
+        tabBarItemStyle: {
+          justifyContent: 'center',
+          alignItems: 'center',
         },
         tabBarActiveTintColor: colors.accent.DEFAULT,
         tabBarInactiveTintColor: colors.text.muted,

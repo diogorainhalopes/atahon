@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Pressable } from 'react-native';
 import Constants from 'expo-constants';
 import { X } from 'lucide-react-native';
 import { colors } from '@theme/colors';
@@ -14,14 +14,16 @@ export function AboutModal({ visible, onClose }: AboutModalProps) {
   const version = Constants.expoConfig?.version || '1.0.0';
 
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        <View style={styles.modal}>
+    <>
+      {visible && <Pressable style={styles.backdropFixed} onPress={onClose} />}
+      <Modal
+        visible={visible}
+        animationType="fade"
+        transparent
+        onRequestClose={onClose}
+      >
+        <Pressable style={styles.backdropCentering} onPress={onClose}>
+          <Pressable style={styles.modal} onPress={() => {}}>
           <View style={styles.header}>
             <Text style={styles.title}>About</Text>
             <TouchableOpacity onPress={onClose} hitSlop={8}>
@@ -57,16 +59,21 @@ export function AboutModal({ visible, onClose }: AboutModalProps) {
 
             <View style={{ height: spacing[4] }} />
           </ScrollView>
-        </View>
-      </View>
-    </Modal>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
+  backdropFixed: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 999,
+  },
+  backdropCentering: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing[5],

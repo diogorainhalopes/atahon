@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -9,13 +9,14 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BookOpen } from 'lucide-react-native';
+import { BookOpen, SlidersHorizontal, Layers } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import PageHeader from '@components/PageHeader';
+import LibraryFilterSheet, { type MangaReadingStatus } from '@components/LibraryFilterSheet';
 import { useLibraryManga, useLibraryChapterCounts } from '@queries/manga';
 import { useSettingsStore } from '@stores/settingsStore';
 import type { Manga } from '@db/schema';
@@ -23,6 +24,18 @@ import type { Manga } from '@db/schema';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_GAP = spacing[2];
 const CARD_PADDING = spacing[3];
+
+// ─── Helper: Derive reading status ─────────────────────────────────────────────
+
+function deriveMangaReadingStatus(
+  manga: Manga,
+  counts?: { total: number; readCount: number }
+): MangaReadingStatus {
+  if (manga.status === 2) return 'completed';
+  if (!counts || counts.readCount === 0) return 'not_started';
+  if (counts.readCount >= counts.total) return 'caught_up';
+  return 'reading';
+}
 
 // ─── MangaCard (Grid mode) ────────────────────────────────────────────────────
 
@@ -145,12 +158,33 @@ function ListItem({
 export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Set<MangaReadingStatus>>(new Set());
   const { data: libraryManga } = useLibraryManga();
   const mangaIds = useMemo(() => (libraryManga ?? []).map((m) => m.id), [libraryManga]);
   const { data: chapterCounts } = useLibraryChapterCounts(mangaIds);
 
   const gridSize = useSettingsStore((s) => s.gridSize);
   const libraryDisplayMode = useSettingsStore((s) => s.libraryDisplayMode);
+
+  const filteredManga = useMemo(() => {
+    if (activeFilters.size === 0) return libraryManga ?? [];
+    return (libraryManga ?? []).filter((manga) => {
+      const counts = chapterCounts?.[manga.id];
+      const status = deriveMangaReadingStatus(manga, counts);
+      return activeFilters.has(status);
+    });
+  }, [libraryManga, chapterCounts, activeFilters]);
+
+  const handleToggleFilter = useCallback((status: MangaReadingStatus) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      next.has(status) ? next.delete(status) : next.add(status);
+      return next;
+    });
+  }, []);
+
+  const handleClearFilters = useCallback(() => setActiveFilters(new Set()), []);
 
   const { numColumns, cardWidth, cardHeight } = useMemo(() => {
     const numColumns = gridSize === 'small' ? 4 : gridSize === 'large' ? 2 : 3;
@@ -178,16 +212,38 @@ export default function LibraryScreen() {
         />
       );
     },
-    [router, chapterCounts, libraryDisplayMode, cardWidth, cardHeight],
+    [router, chapterCounts, libraryDisplayMode, cardWidth, cardHeight, activeFilters],
   );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <PageHeader title="Library" />
+      <PageHeader
+        title="Library"
+        right={
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => router.push('/buckets')} hitSlop={8}>
+              <Layers size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setFilterSheetVisible(true)}>
+              <View>
+                <SlidersHorizontal size={24} color={colors.text.primary} />
+                {activeFilters.size > 0 && (
+                  <View
+                    style={[
+                      styles.filterBadge,
+                      { backgroundColor: colors.accent.DEFAULT },
+                    ]}
+                  />
+                )}
+              </View>
+            </TouchableOpacity>
+          </View>
+        }
+      />
 
       <FlatList
         key={`${numColumns}-${libraryDisplayMode}`}
-        data={libraryManga}
+        data={filteredManga}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         numColumns={libraryDisplayMode === 'list' ? 1 : numColumns}
@@ -195,17 +251,36 @@ export default function LibraryScreen() {
         contentContainerStyle={[
           styles.grid,
           { paddingBottom: insets.bottom + 128 },
-          (!libraryManga || libraryManga.length === 0) && styles.emptyList,
+          filteredManga.length === 0 && styles.emptyList,
         ]}
         ListEmptyComponent={
           <View style={styles.empty}>
             <BookOpen size={64} color={colors.text.muted} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>Your library is empty</Text>
-            <Text style={styles.emptySubtitle}>
-              Browse extensions to find and add manga to your library
-            </Text>
+            {libraryManga?.length === 0 ? (
+              <>
+                <Text style={styles.emptyTitle}>Your library is empty</Text>
+                <Text style={styles.emptySubtitle}>
+                  Browse extensions to find and add manga to your library
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.emptyTitle}>No manga found</Text>
+                <Text style={styles.emptySubtitle}>
+                  Try adjusting your filters
+                </Text>
+              </>
+            )}
           </View>
         }
+      />
+
+      <LibraryFilterSheet
+        visible={filterSheetVisible}
+        onClose={() => setFilterSheetVisible(false)}
+        activeFilters={activeFilters}
+        onToggle={handleToggleFilter}
+        onClear={handleClearFilters}
       />
     </View>
   );
@@ -333,5 +408,19 @@ const styles = StyleSheet.create({
   listItemChapter: {
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
+  },
+
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[5],
   },
 });

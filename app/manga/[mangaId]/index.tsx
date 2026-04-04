@@ -43,6 +43,7 @@ import {
   Eye,
   EyeOff,
   X,
+  Layers,
 } from 'lucide-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
@@ -62,6 +63,7 @@ import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
 import { useMergedExtensions, useRepos } from '@queries/extensions';
 import { useDownloadStore } from '@stores/downloadStore';
 import { useSettingsStore } from '@stores/settingsStore';
+import { BucketPickerModal } from '@components/BucketPickerModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const COVER_HEIGHT = 280;
@@ -301,6 +303,9 @@ export default function MangaDetailScreen() {
   // Wi-Fi modal state
   const [wifiModalVisible, setWifiModalVisible] = useState(false);
   const pendingAction = useRef<(() => void) | null>(null);
+
+  // Bucket picker modal state
+  const [bucketPickerVisible, setBucketPickerVisible] = useState(false);
 
   // Fetch from source on first visit
   useEffect(() => {
@@ -591,7 +596,11 @@ export default function MangaDetailScreen() {
           )}
 
           {/* Action row */}
-          <View style={styles.actionRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.actionRow}
+          >
             <TouchableOpacity
               style={[
                 styles.libraryBtn,
@@ -645,7 +654,15 @@ export default function MangaDetailScreen() {
                 Smart Download
               </Text>
             </TouchableOpacity>
-          </View>
+            <TouchableOpacity
+              style={styles.smartDlBtn}
+              onPress={() => setBucketPickerVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Layers size={16} color={colors.text.muted} />
+              <Text style={styles.smartDlText}>Buckets</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
 
         {/* Chapter list header */}
@@ -937,6 +954,13 @@ export default function MangaDetailScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Bucket Picker Modal */}
+      <BucketPickerModal
+        visible={bucketPickerVisible}
+        onClose={() => setBucketPickerVisible(false)}
+        mangaId={numericId}
+      />
     </>
   );
 }
@@ -1094,7 +1118,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: spacing[3],
-    paddingTop: spacing[2],
+    paddingVertical: spacing[1],
   },
   libraryBtn: {
     flexDirection: 'row',
