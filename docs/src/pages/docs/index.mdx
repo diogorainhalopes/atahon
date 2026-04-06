@@ -1,0 +1,55 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Documentation
+description: Learn how to set up and use Atahon, a modern manga reader for Android.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Atahon is a modern manga reader for Android, built with Expo and React Native. It's designed around an **offline-first architecture** with full **Tachiyomi/Mihon extension compatibility**, giving you access to hundreds of community-maintained manga sources.
+
+## Key Features
+
+- **Extension ecosystem** — Install Tachiyomi & Mihon-compatible extension APKs to access manga from hundreds of sources
+- **Library management** — Organize your collection with custom categories, track reading progress, and filter by status
+- **4 reading modes** — Webtoon (vertical scroll), Left-to-Right, Right-to-Left, and Vertical paged
+- **13+ reader settings** — Scale type, page layout, preload count, background color, fullscreen, and more
+- **Smart downloads** — Automatically queue new chapters for manga you follow
+- **Chapter compression** — Convert downloaded pages to WebP with adjustable quality to save storage
+- **Privacy mode** — Anonymous mode disables history tracking; all data stays on-device
+
+## Quick Start
+
+Getting started with Atahon takes just a few minutes:
+
+1. **Install the APK** — Download the latest release from [GitHub Releases](https://github.com/diogorainhalopes/atahon/releases) and install it on your Android device
+2. **Add a repository** — Go to **More > Extensions > Repositories** and add a repo URL (see [Adding Repositories](/atahon/docs/repositories/))
+3. **Install extensions** — Browse available extensions and install the ones for sources you want to read from (see [Enabling Extensions](/atahon/docs/extensions/))
+4. **Browse & read** — Go to the **Browse** tab, select a source, and start discovering manga
+
+<Callout type="info">
+  Atahon requires Android 8.0 (API 26) or later. It is distributed as a direct APK — not through Google Play.
+</Callout>
+
+## Architecture Overview
+
+Atahon is built with a modern tech stack:
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Expo SDK 55 + React Native 0.83 |
+| UI | NativeWind (Tailwind CSS for RN) |
+| Database | SQLite via expo-sqlite + Drizzle ORM |
+| State | Zustand (persisted with AsyncStorage) |
+| Data fetching | TanStack Query v5 |
+| Extensions | Native Kotlin Expo Module bridge |
+
+Your entire library, reading history, and downloaded chapters live in a local SQLite database on your device. No account required, no cloud sync, no telemetry.
+
+## Documentation Sections
+
+- **[How It Works](/atahon/docs/how-it-works/)** — Architecture deep-dive: extension bridge, data flow, and storage
+- **[Adding Repositories](/atahon/docs/repositories/)** — How to add extension repositories
+- **[Enabling Extensions](/atahon/docs/extensions/)** — Installing, updating, and managing extensions
+- **[Smart Downloads](/atahon/docs/smart-downloads/)** — Auto-downloading new chapters
+- **[Chapter Compression](/atahon/docs/compression/)** — WebP compression and quality settings

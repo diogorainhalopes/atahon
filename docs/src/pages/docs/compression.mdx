@@ -1,0 +1,114 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Chapter Compression
+description: How Atahon compresses downloaded chapter pages to save storage space.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Atahon can compress downloaded manga pages from their original format to **WebP**, significantly reducing storage usage while maintaining visual quality. Compression is applied during the download process.
+
+## How It Works
+
+When compression is enabled (the default), the download worker processes each page through the extension bridge's native `downloadPage` method with two additional parameters:
+
+- **Quality** — WebP quality level (1–100)
+- **Max Width** — Maximum pixel width for the image
+
+The native Kotlin layer handles the actual image decoding, resizing, and re-encoding to WebP format. This happens on the native side for performance — no JavaScript image processing is involved.
+
+### Without Compression
+
+- Pages are saved as `.jpg` files at their original resolution and quality
+- No resizing or re-encoding is applied
+- File sizes depend entirely on the source
+
+### With Compression (Default)
+
+- Pages are saved as `.webp` files
+- Quality is controlled by the slider (default: **80**)
+- Width is capped at **1.5x your screen width** — large enough for pinch-to-zoom but avoids storing unnecessarily huge images
+- The original aspect ratio is always preserved
+
+## Settings
+
+Configure compression in **More > Settings > Downloads**:
+
+### Compress Downloads Toggle
+
+- **On (default):** Pages are converted to WebP with the quality and size limits below
+- **Off:** Pages are saved as-is from the source (typically JPEG)
+
+### Quality Slider
+
+Controls the WebP quality level:
+
+| Quality | File Size | Visual Quality |
+|---------|-----------|----------------|
+| 100 | Largest | Lossless-equivalent |
+| 80 (default) | ~40-60% smaller | Excellent — indistinguishable for most manga |
+| 60 | ~60-75% smaller | Good — slight softening on detailed art |
+| 40 | ~75-85% smaller | Acceptable — noticeable on close inspection |
+| 20 | ~85-90% smaller | Low — visible artifacts |
+
+<Callout type="tip">
+  For manga (line art with flat colors), quality 70-80 typically produces excellent results with significant size savings. Detailed color illustrations may benefit from quality 85-90.
+</Callout>
+
+## Max Width Calculation
+
+The maximum width is calculated as:
+
+```
+maxWidth = Math.round(screenWidth * 1.5)
+```
+
+For a typical phone with a 1080px-wide screen, this means:
+
+- Max width = **1620px**
+- Images wider than this are downscaled (maintaining aspect ratio)
+- Images narrower than this are left untouched
+
+This provides enough resolution for comfortable pinch-to-zoom while avoiding multi-megabyte images from high-resolution sources.
+
+## Storage Impact
+
+The actual storage savings depend on the source, but here are typical results:
+
+| Scenario | Original | Compressed (Q80) | Savings |
+|----------|----------|-------------------|---------|
+| Standard manga chapter (20 pages) | ~15-25 MB | ~6-12 MB | ~50-60% |
+| Webtoon chapter (long strips) | ~20-40 MB | ~8-18 MB | ~55-65% |
+| Full-color manga (20 pages) | ~25-40 MB | ~12-20 MB | ~45-55% |
+
+Over a library of hundreds of chapters, this adds up to gigabytes of saved storage.
+
+## Compression Metadata
+
+Each downloaded chapter's `pages.json` file records whether compression was applied:
+
+```json
+{
+  "chapterId": 42,
+  "pageCount": 20,
+  "isCompressed": true,
+  "quality": 80,
+  "pages": [
+    { "index": 0, "filename": "0.webp" },
+    { "index": 1, "filename": "1.webp" }
+  ]
+}
+```
+
+This metadata allows the reader to correctly identify the file format and provides transparency about what quality level was used.
+
+<Callout type="info">
+  Compression is applied at download time, not retroactively. If you change the quality setting, it only affects future downloads. Already-downloaded chapters keep their original compression settings.
+</Callout>
+
+## Recommendations
+
+- **Storage-constrained devices:** Use quality 60-70 for maximum savings
+- **Balanced (most users):** Keep the default of 80 — best quality-to-size ratio
+- **Quality-focused:** Use 90-100 if storage isn't a concern
+- **Archival:** Disable compression entirely to preserve original source quality

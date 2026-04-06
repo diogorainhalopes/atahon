@@ -43,3 +43,14 @@ coverage/
 
 expo-env.d.ts
 # @end expo-cli
+
+.agents
+.claude
+.skills-lock.json
+.tmp
+
+# Website build output
+docs/dist/
+docs/node_modules/
+docs/.astro/
+

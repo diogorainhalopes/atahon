@@ -1,0 +1,118 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: How It Works
+description: Understand Atahon's architecture — the extension bridge, data flow, and offline-first design.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Atahon is built around three core principles: **offline-first storage**, a **native extension bridge**, and a **reactive UI layer**. This page explains how these pieces fit together.
+
+## Offline-First Database
+
+All data lives in a local **SQLite database** on your device, managed through [Drizzle ORM](https://orm.drizzle.team/). There is no cloud backend — your library, reading history, and progress are yours alone.
+
+The database contains these tables:
+
+| Table | Purpose |
+|-------|---------|
+| `manga` | Library entries with metadata, status, progress |
+| `chapter` | Chapter listings per manga, download status |
+| `history` | Reading history with timestamps |
+| `category` | User-created categories (buckets) |
+| `manga_category` | Many-to-many link between manga and categories |
+| `download_queue` | Persistent download queue |
+| `extension_repo` | Extension repository URLs |
+
+When you add a manga to your library, its metadata and chapter list are stored locally. When you read a chapter, your progress (page number) is saved to the `manga` record. History entries are created with timestamps so you can resume where you left off.
+
+## The Extension Bridge
+
+Extensions are the heart of Atahon. They provide access to manga sources — each extension is a **Tachiyomi/Mihon-compatible APK** that gets loaded at runtime through a native Kotlin module.
+
+### How extensions are loaded
+
+1. Extension APKs are stored on-device as `.ext` files in the app's private storage
+2. A **ChildFirstPathClassLoader** loads the extension's DEX code, giving extension classes priority over the host app
+3. The extension's main class is instantiated, providing one or more **Source** objects
+4. Each Source implements methods like `getPopularManga()`, `searchManga()`, `getChapterList()`, and `getPageList()`
+
+### The bridge layer
+
+The native Kotlin module (`ExtensionBridge`) exposes these operations to JavaScript:
+
+```
+loadInstalledExtensions()  → Scan and load all installed extensions
+installExtension(url, pkg) → Download APK, store as .ext, load
+uninstallExtension(pkg)    → Remove the .ext file and unload
+callSource(id, method, params) → Invoke a source method (JSON in/out)
+```
+
+When you browse a source, the JavaScript layer calls `callSource()` with the source ID and method name. The Kotlin bridge dispatches to the correct extension, serializes the result as JSON, and returns it to React Native.
+
+<Callout type="info">
+  Extensions run in the same process as the app but in an isolated classloader. They can't access your data — they only respond to specific API calls.
+</Callout>
+
+## Data Flow
+
+Here's how data moves through the app when you browse manga from a source:
+
+```
+User action (Browse tab)
+    ↓
+React Query hook (usePopularManga, useSearchManga, etc.)
+    ↓
+ExtensionBridge.callSource(sourceId, "getPopularManga", { page })
+    ↓
+Kotlin bridge → Extension APK → Source.getPopularManga()
+    ↓
+JSON response → Parsed in JS → Rendered in UI
+```
+
+When you add a manga to your library:
+
+```
+"Add to Library" tap
+    ↓
+Drizzle ORM → INSERT into manga table
+    ↓
+Fetch full details: getMangaDetails() + getChapterList()
+    ↓
+Store chapters in chapter table
+    ↓
+React Query cache invalidated → UI updates
+```
+
+## State Management
+
+Atahon uses **Zustand** stores for client-side state, persisted to AsyncStorage:
+
+| Store | Manages |
+|-------|---------|
+| `settingsStore` | App preferences: theme, grid size, download settings, privacy |
+| `readerStore` | Reader session + persisted settings (reading mode, scale type, etc.) |
+| `downloadStore` | Download queue and worker status |
+| `sourceStore` | Enabled/disabled sources |
+
+Server state (manga data, extensions, history) is managed through **TanStack Query** with SQLite as the cache backing store rather than a remote API.
+
+## Downloaded Chapters
+
+When you download a chapter, the pages are stored on the device's file system:
+
+```
+{documentsDir}/manga/{mangaId}/{chapterId}/
+  ├── 0.webp (or .jpg)
+  ├── 1.webp
+  ├── 2.webp
+  ├── ...
+  └── pages.json   ← completion sentinel + metadata
+```
+
+The `pages.json` file serves as both a completion marker and metadata store. It records:
+- Page count and filenames
+- Whether compression was applied
+- The quality setting used
+
+The reader checks for `pages.json` to determine if a chapter is available offline. If the file exists, pages are loaded from the local file system instead of fetching from the source.

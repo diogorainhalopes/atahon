@@ -1,0 +1,102 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Enabling Extensions
+description: How to install, manage, and use extensions in Atahon to access manga sources.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Extensions are the backbone of Atahon's content system. Each extension is a plugin (APK) that provides one or more **manga sources** — the websites or services where manga is hosted.
+
+## What Are Extensions?
+
+Extensions are **Tachiyomi/Mihon-compatible APK files** that Atahon loads at runtime through a native Kotlin bridge. Each extension:
+
+- Provides one or more **sources** (e.g., a single extension might include sources for multiple languages)
+- Is identified by a **package name** (e.g., `eu.kanade.tachiyomi.extension.en.mangadex`)
+- Has a **version**, **language**, and optional **NSFW** flag
+- Runs in an isolated classloader inside the app
+
+<Callout type="info">
+  Extensions don't have access to your library, history, or personal data. They only respond to specific API calls like "search for manga" or "get chapter pages."
+</Callout>
+
+## Installing Extensions
+
+Before installing extensions, make sure you've [added at least one repository](/atahon/docs/repositories/).
+
+1. Go to the **More** tab and tap **Extensions**
+2. Browse the list of available extensions from your enabled repositories
+3. Tap an extension to see its details (sources, version, language)
+4. Tap **Install** to download and install the extension
+
+The extension APK is downloaded from the repository and stored locally as a `.ext` file in the app's private storage.
+
+### Extension Details
+
+Each extension entry shows:
+
+| Field | Meaning |
+|-------|---------|
+| Name | Extension name (e.g., "MangaDex") |
+| Language | Two-letter language code (e.g., "en", "ja", "multi") |
+| Version | Current installed version |
+| Sources | Number of manga sources this extension provides |
+| NSFW | Whether the extension contains adult content |
+
+## Managing Extensions
+
+### Updating
+
+When a repository has a newer version of an installed extension, you'll see an **Update** badge. Tap the extension and confirm to update.
+
+### Uninstalling
+
+To remove an extension:
+
+1. Go to **More > Extensions**
+2. Find the installed extension
+3. Tap it and select **Uninstall**
+
+This removes the `.ext` file and unloads all sources from that extension.
+
+### Viewing Sources
+
+Each extension provides one or more sources. After installing an extension:
+
+1. The sources appear in the **Browse** tab
+2. Each source is listed with its name and base URL
+3. You can enable or disable individual sources
+
+## Using Sources
+
+Once you have extensions installed, their sources appear in the **Browse** tab:
+
+### Browsing
+
+- **Popular** — Browse the most popular manga from a source
+- **Latest** — See the most recently updated manga
+- **Search** — Search for specific titles across a source
+
+### Adding Manga to Library
+
+When you find a manga you want to follow:
+
+1. Tap the manga card to open its detail page
+2. The detail page shows: title, author, artist, description, status, genres, and chapter list
+3. Tap **Add to Library** to save it to your collection
+4. The manga and its chapter list are stored in your local database
+
+Manga already in your library will show an **"IN LIBRARY"** indicator when browsing.
+
+## Extension Compatibility
+
+Atahon is compatible with extensions built for **Tachiyomi** and **Mihon** with:
+
+- Lib version **1.4–1.5**
+- Standard HTTP source interface (`HttpSource`)
+- OkHttp 4.x and Jsoup-based parsing
+
+<Callout type="warning">
+  Not all Tachiyomi extensions may work perfectly. Extensions that rely on WebView-based authentication or custom UI elements may have limited support.
+</Callout>

@@ -1,0 +1,74 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-border-subtle bg-background-secondary">
+  <div class="mx-auto max-w-6xl px-6 py-12">
+    <div class="grid gap-8 md:grid-cols-3">
+      <!-- Brand -->
+      <div>
+        <a href={`${base}/`} class="flex items-center gap-3">
+          <img src={`${base}/icon.png`} alt="Atahon" class="h-8 w-8 rounded-lg" />
+          <span class="text-lg font-bold text-text-primary">Atahon</span>
+        </a>
+        <p class="mt-3 text-sm text-text-muted">
+          A modern manga reader.
+        </p>
+      </div>
+
+      <!-- Links -->
+      <div>
+        <h3 class="mb-3 text-sm font-semibold text-text-primary">Resources</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <a href={`${base}/docs/`} class="text-sm text-text-secondary transition-colors hover:text-accent">
+              Documentation
+            </a>
+          </li>
+          <li>
+            <a href={`${base}/docs/how-it-works/`} class="text-sm text-text-secondary transition-colors hover:text-accent">
+              How It Works
+            </a>
+          </li>
+          <li>
+            <a href={`${base}/docs/extensions/`} class="text-sm text-text-secondary transition-colors hover:text-accent">
+              Extensions
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- More -->
+      <div>
+        <h3 class="mb-3 text-sm font-semibold text-text-primary">Project</h3>
+        <ul class="flex flex-col gap-2">
+          <li>
+            <a
+              href="https://github.com/diogorainhalopes/atahon"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-text-secondary transition-colors hover:text-accent"
+            >
+              GitHub
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/diogorainhalopes/atahon/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-text-secondary transition-colors hover:text-accent"
+            >
+              Releases
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-10 border-t border-border-subtle pt-6 text-center text-sm text-text-muted">
+      &copy; {year} Atahon.
+    </div>
+  </div>
+</footer>

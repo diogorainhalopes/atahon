@@ -1,0 +1,54 @@
+---
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const currentPath = Astro.url.pathname;
+
+const sections = [
+  { label: 'Overview', href: '/docs/' },
+  { label: 'How It Works', href: '/docs/how-it-works/' },
+  { label: 'Adding Repositories', href: '/docs/repositories/' },
+  { label: 'Enabling Extensions', href: '/docs/extensions/' },
+  { label: 'Smart Downloads', href: '/docs/smart-downloads/' },
+  { label: 'Chapter Compression', href: '/docs/compression/' },
+];
+
+function isActive(href: string) {
+  const fullHref = `${base}${href}`;
+  return currentPath === fullHref || currentPath === fullHref.replace(/\/$/, '');
+}
+---
+
+<nav class="w-full">
+  <div class="mb-4">
+    <a
+      href={`${base}/`}
+      class="inline-flex items-center gap-1.5 text-sm text-text-muted transition-colors hover:text-accent"
+    >
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      Back to home
+    </a>
+  </div>
+
+  <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+    Documentation
+  </h3>
+
+  <ul class="flex flex-col gap-0.5">
+    {sections.map((section) => (
+      <li>
+        <a
+          href={`${base}${section.href}`}
+          class:list={[
+            'block rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            isActive(section.href)
+              ? 'bg-accent-muted text-accent'
+              : 'text-text-secondary hover:bg-surface hover:text-text-primary',
+          ]}
+        >
+          {section.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

@@ -1,0 +1,108 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Smart Downloads
+description: How Smart Downloads automatically queue new chapters for offline reading.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Smart Downloads is Atahon's automatic chapter download feature. When enabled for a manga, new chapters are automatically queued for download whenever they're detected — so your reading material is always ready offline.
+
+## How It Works
+
+1. You enable **Smart Downloads** on a manga's detail page
+2. When the app checks for updates (based on your library update interval), it fetches the latest chapter list from the source
+3. Any new chapters that weren't previously in the database are detected
+4. If Smart Downloads is enabled for that manga, the new chapters are automatically added to the download queue
+5. The download worker processes the queue in the background
+
+## Enabling Smart Downloads
+
+### Per-Manga Toggle
+
+Smart Downloads is configured on a per-manga basis:
+
+1. Open a manga from your library
+2. On the manga detail page, find the **Smart Downloads** toggle
+3. Enable it — new chapters will now be auto-downloaded
+
+### Library Update Interval
+
+Smart Downloads relies on the library update check to detect new chapters. Configure the update interval in:
+
+**More > Settings > Library > Update Interval**
+
+- Set to **0** for manual-only updates (pull-to-refresh)
+- Or set an interval in hours (e.g., 12 hours)
+
+## The Download Queue
+
+All downloads — whether from Smart Downloads or manually triggered — go through the same queue system.
+
+### Queue States
+
+Each download moves through these states:
+
+| Status | Meaning |
+|--------|---------|
+| `queued` | Waiting to be processed |
+| `downloading` | Currently being downloaded |
+| `paused` | Manually paused by user |
+| `error` | Failed (with error message) |
+| `completed` | Successfully downloaded |
+
+### Managing the Queue
+
+Access the download queue from **More > Downloads**:
+
+- **Pause/Resume** — Pause individual downloads or the entire queue
+- **Remove** — Remove a download from the queue
+- **Clear Completed** — Remove all completed entries
+- **Progress** — See real-time progress for each chapter (0–100%)
+
+## Download Settings
+
+Configure download behavior in **More > Settings > Downloads**:
+
+### Concurrent Downloads
+
+Controls how many chapters download simultaneously.
+
+- **Range:** 1–6
+- **Default:** 6
+- Lower values use less bandwidth and battery; higher values finish faster
+
+### WiFi-Only Mode
+
+When enabled, downloads only proceed when connected to WiFi.
+
+<Callout type="warning">
+  If WiFi-Only is disabled, downloads will use mobile data. This can consume significant data depending on the manga source and compression settings.
+</Callout>
+
+### Compression
+
+See [Chapter Compression](/atahon/docs/compression/) for details on how downloaded pages are compressed.
+
+## How the Worker Operates
+
+The download worker uses a **pump loop** architecture:
+
+1. The worker checks the queue for items with `queued` status
+2. It launches downloads up to the concurrent limit
+3. Each download: fetches the page list → resolves image URLs → downloads pages in batches of 3
+4. After each batch, progress is updated in both the UI (Zustand store) and the database
+5. When a chapter completes, a `pages.json` sentinel file is written
+6. The worker then picks up the next queued item
+7. When the queue is empty and all active downloads finish, the worker stops automatically
+
+<Callout type="tip">
+  Downloads are persistent. If the app is closed and reopened, the queue is restored from the database and the worker resumes automatically.
+</Callout>
+
+## Duplicate Prevention
+
+The download system prevents duplicate entries:
+
+- If a chapter is already in the queue (any status), it won't be added again
+- This applies to both Smart Downloads and manual download triggers

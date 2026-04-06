@@ -1,0 +1,86 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Adding Repositories
+description: How to add extension repositories to Atahon so you can install manga source extensions.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Repositories are the way Atahon discovers available extensions. A repository is a JSON index file hosted online (typically on GitHub) that lists all the extensions it provides.
+
+## What is a Repository?
+
+A repository is a URL pointing to an `index.min.json` file. This file contains metadata about every extension available in that repo:
+
+- Extension name and package name
+- Version and language
+- APK download URL
+- Sources provided (name, ID, base URL)
+- NSFW flag
+
+When you add a repo, Atahon fetches this index and shows the available extensions in the **Extensions** screen.
+
+## Adding a Repository
+
+1. Open the app and go to the **More** tab
+2. Tap **Extensions**
+3. Tap the **Repositories** button (gear icon)
+4. Tap **Add Repository**
+5. Paste the repository URL and confirm
+
+### URL Format
+
+Repository URLs must point to a valid `index.min.json` file. The typical format for GitHub-hosted repos is:
+
+```
+https://raw.githubusercontent.com/{owner}/{repo}/{branch}/index.min.json
+```
+
+For example, a community repository might look like:
+
+```
+https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json
+```
+
+<Callout type="warning">
+  Only add repositories you trust. Extensions have access to network requests and can load arbitrary code. Stick to well-known community repositories.
+</Callout>
+
+## Managing Repositories
+
+### Enable / Disable
+
+You can disable a repository without removing it. Disabled repos won't show their extensions in the browse list, but the URL is preserved so you can re-enable it later.
+
+- In the Repositories screen, tap the toggle next to a repo to enable or disable it
+
+### Remove
+
+To completely remove a repository:
+
+- Swipe left on the repo entry, or tap the delete button
+
+### Clear Disabled
+
+To bulk-remove all disabled repositories:
+
+- Use the **Clear Disabled** option in the repositories screen
+
+## How Repos Are Stored
+
+Repositories are stored in the local SQLite database (`extension_repo` table) with these fields:
+
+| Field | Description |
+|-------|-------------|
+| `url` | The full URL to `index.min.json` (unique) |
+| `name` | Auto-parsed from the URL (e.g., `keiyoushi/extensions`) |
+| `enabled` | Whether the repo is active |
+| `lastFetchedAt` | Timestamp of the last successful fetch |
+
+## Refreshing Extensions
+
+After adding a repository, the extension list refreshes automatically. You can also pull-to-refresh on the Extensions screen to fetch the latest index from all enabled repos.
+
+<Callout type="tip">
+  If an extension shows an "Update available" badge, it means the repo has a newer version than what you have installed. Tap it to update.
+</Callout>

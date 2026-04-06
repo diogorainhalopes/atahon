@@ -1,0 +1,22 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  icon: string;
+  delay?: number;
+}
+
+const { title, description, icon, delay = 0 } = Astro.props;
+---
+
+<div
+  data-animate
+  class="group rounded-2xl border border-border bg-background-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/5"
+  style={delay ? `transition-delay: ${delay}ms;` : ''}
+>
+  <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-muted text-accent transition-colors group-hover:bg-accent/20">
+    <Fragment set:html={icon} />
+  </div>
+  <h3 class="mb-2 text-lg font-semibold text-text-primary">{title}</h3>
+  <p class="text-sm leading-relaxed text-text-secondary">{description}</p>
+</div>

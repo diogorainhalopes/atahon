@@ -1,0 +1,90 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import DocsSidebar from '../components/DocsSidebar.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+
+interface Props {
+  frontmatter: {
+    title: string;
+    description?: string;
+  };
+  headings: Array<{ depth: number; slug: string; text: string }>;
+}
+
+const { frontmatter, headings } = Astro.props;
+---
+
+<BaseLayout title={`${frontmatter.title} — Atahon Docs`} description={frontmatter.description}>
+  <div class="mx-auto max-w-7xl px-6 pt-28 pb-16">
+    <div class="flex gap-10">
+      <!-- Sidebar -->
+      <aside class="hidden w-56 shrink-0 lg:block">
+        <div class="sticky top-28">
+          <DocsSidebar />
+        </div>
+      </aside>
+
+      <!-- Mobile sidebar toggle -->
+      <div class="fixed bottom-6 right-6 z-40 lg:hidden">
+        <button
+          id="docs-sidebar-toggle"
+          class="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-lg shadow-accent/25"
+          aria-label="Toggle docs navigation"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile sidebar overlay -->
+      <div
+        id="docs-sidebar-overlay"
+        class="fixed inset-0 z-50 hidden bg-background/80 backdrop-blur-sm lg:hidden"
+      >
+        <div class="absolute left-0 top-0 h-full w-72 border-r border-border bg-background-secondary p-6 pt-20">
+          <button
+            id="docs-sidebar-close"
+            class="absolute top-6 right-6 text-text-muted hover:text-text-primary"
+            aria-label="Close sidebar"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <DocsSidebar />
+        </div>
+      </div>
+
+      <!-- Content -->
+      <article class="min-w-0 flex-1">
+        <div class="prose max-w-none">
+          <h1>{frontmatter.title}</h1>
+          <slot />
+        </div>
+      </article>
+
+      <!-- Table of Contents -->
+      <aside class="hidden w-48 shrink-0 xl:block">
+        <div class="sticky top-28">
+          <TableOfContents headings={headings} />
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const toggle = document.getElementById('docs-sidebar-toggle');
+    const overlay = document.getElementById('docs-sidebar-overlay');
+    const close = document.getElementById('docs-sidebar-close');
+
+    function openSidebar() { overlay?.classList.remove('hidden'); }
+    function closeSidebar() { overlay?.classList.add('hidden'); }
+
+    toggle?.addEventListener('click', openSidebar);
+    close?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', (e) => {
+      if (e.target === overlay) closeSidebar();
+    });
+  </script>
+</BaseLayout>
