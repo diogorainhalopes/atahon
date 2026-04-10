@@ -36,23 +36,19 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
       - name: Build release APK
-        run: make build-prod
-        env:
-          ORG_GRADLE_PROJECT_android.injected.signing.store.file: ${{ github.workspace }}/android/app/release.keystore
-          ORG_GRADLE_PROJECT_android.injected.signing.store.password: ${{ secrets.KEYSTORE_PASSWORD }}
-          ORG_GRADLE_PROJECT_android.injected.signing.key.alias: ${{ secrets.KEYSTORE_ALIAS }}
-          ORG_GRADLE_PROJECT_android.injected.signing.key.password: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cd android && ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/android/app/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEYSTORE_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
       - name: Compute version and release notes
         id: release_info
         run: |
           VERSION=$(python scripts/release.py version)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
-          echo "notes<<$EOF_MARKER" >> "$GITHUB_OUTPUT"
-          python scripts/release.py notes >> "$GITHUB_OUTPUT"
-          echo "$EOF_MARKER" >> "$GITHUB_OUTPUT"
+          python scripts/release.py notes > release-notes.md
 
       - name: Create tag
         run: |
@@ -64,7 +60,7 @@ jobs:
           gh release create ${{ steps.release_info.outputs.version }} \
             android/app/build/outputs/apk/release/app-release.apk \
             --title "${{ steps.release_info.outputs.version }}" \
-            --notes "${{ steps.release_info.outputs.notes }}"
+            --notes-file release-notes.md
         env:
           GH_TOKEN: ${{ github.token }}
 

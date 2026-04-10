@@ -56,3 +56,5 @@ docs/.astro/
 
 CLAUDE.md
 TODO.mdx
+*.keystore
+*.jks
