@@ -1,0 +1,73 @@
+name: Release APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: npm ci
+
+      - run: npx expo prebuild --clean
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      - name: Build release APK
+        run: make build-prod
+        env:
+          ORG_GRADLE_PROJECT_android.injected.signing.store.file: ${{ github.workspace }}/android/app/release.keystore
+          ORG_GRADLE_PROJECT_android.injected.signing.store.password: ${{ secrets.KEYSTORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_android.injected.signing.key.alias: ${{ secrets.KEYSTORE_ALIAS }}
+          ORG_GRADLE_PROJECT_android.injected.signing.key.password: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Compute version and release notes
+        id: release_info
+        run: |
+          VERSION=$(python scripts/release.py version)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
+          echo "notes<<$EOF_MARKER" >> "$GITHUB_OUTPUT"
+          python scripts/release.py notes >> "$GITHUB_OUTPUT"
+          echo "$EOF_MARKER" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        run: |
+          git tag ${{ steps.release_info.outputs.version }}
+          git push origin ${{ steps.release_info.outputs.version }}
+
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ steps.release_info.outputs.version }} \
+            android/app/build/outputs/apk/release/app-release.apk \
+            --title "${{ steps.release_info.outputs.version }}" \
+            --notes "${{ steps.release_info.outputs.notes }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Cleanup keystore
+        if: always()
+        run: rm -f android/app/release.keystore

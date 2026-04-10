@@ -54,3 +54,5 @@ docs/dist/
 docs/node_modules/
 docs/.astro/
 
+CLAUDE.md
+TODO.mdx

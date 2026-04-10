@@ -2,7 +2,7 @@
 # Run `make help` to see all available targets
 
 .DEFAULT_GOAL := help
-.PHONY: help setup android ios release clean lint test update-deps prebuild
+.PHONY: help setup android build-prod android-prod ios release clean lint test update-deps prebuild
 
 # Show this help message
 help:
@@ -25,8 +25,12 @@ setup: ## Install deps, fix Expo versions, check Node and Java versions
 android: ## Build and run on Android (npx expo run:android)
 	npx expo run:android
 
-android-prod:
+# Build release APK only (used by CI)
+build-prod: ## Build release APK via Gradle
 	cd android && ./gradlew assembleRelease
+
+# Build release APK and install on connected device
+android-prod: build-prod ## Build release APK and install on device
 	adb install -r android/app/build/outputs/apk/release/app-release.apk
 
 # Build and launch on iOS simulator
