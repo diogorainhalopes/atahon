@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
+  Image,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { X } from 'lucide-react-native';
@@ -36,6 +37,7 @@ export default function AboutScreen() {
         <ScrollView contentContainerStyle={styles.content}>
           
           <View style={styles.section}>
+            <Image source={require('../../ATAHON.png')} style={styles.logo} />
             <Text style={styles.appName}>Atahon</Text>
             <Text style={styles.version}>v{version}</Text>
             <Text style={styles.description}>
@@ -102,6 +104,12 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing[5],
     gap: spacing[6],
+  },
+  logo: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.xl,
+    marginBottom: spacing[3],
   },
   section: {
     alignItems: 'center',
