@@ -26,7 +26,7 @@ The native Kotlin layer handles the actual image decoding, resizing, and re-enco
 ### With Compression (Default)
 
 - Pages are saved as `.webp` files
-- Quality is controlled by the slider (default: **80**)
+- Quality is controlled by 3 settings: *Low*, *Medium* and *High*
 - Width is capped at **1.5x your screen width** — large enough for pinch-to-zoom but avoids storing unnecessarily huge images
 - The original aspect ratio is always preserved
 
@@ -39,20 +39,18 @@ Configure compression in **More > Settings > Downloads**:
 - **On (default):** Pages are converted to WebP with the quality and size limits below
 - **Off:** Pages are saved as-is from the source (typically JPEG)
 
-### Quality Slider
+### Image Quality
 
-Controls the WebP quality level:
+Controls the WebP quality level. Three options are available:
 
-| Quality | File Size | Visual Quality |
-|---------|-----------|----------------|
-| 100 | Largest | Lossless-equivalent |
-| 80 (default) | ~40-60% smaller | Excellent — indistinguishable for most manga |
-| 60 | ~60-75% smaller | Good — slight softening on detailed art |
-| 40 | ~75-85% smaller | Acceptable — noticeable on close inspection |
-| 20 | ~85-90% smaller | Low — visible artifacts |
+| Option | Quality | File Size | Visual Quality |
+|--------|---------|-----------|----------------|
+| Low | 65 | Smallest | Good — slight softening on detailed art |
+| Medium (default) | 80 | ~40-60% smaller than original | Excellent — indistinguishable for most manga |
+| High | 90 | ~20-35% smaller than original | Near-lossless for most content |
 
 <Callout type="tip">
-  For manga (line art with flat colors), quality 70-80 typically produces excellent results with significant size savings. Detailed color illustrations may benefit from quality 85-90.
+  Medium (80) is the best quality-to-size ratio for most manga. Use High if you read detailed color illustrations and storage isn't a concern.
 </Callout>
 
 ## Max Width Calculation
@@ -108,7 +106,7 @@ This metadata allows the reader to correctly identify the file format and provid
 
 ## Recommendations
 
-- **Storage-constrained devices:** Use quality 60-70 for maximum savings
-- **Balanced (most users):** Keep the default of 80 — best quality-to-size ratio
-- **Quality-focused:** Use 90-100 if storage isn't a concern
+- **Storage-constrained devices:** Use *Low* (65) for maximum savings
+- **Balanced (most users):** Keep the default *Medium* (80) — best quality-to-size ratio
+- **Quality-focused:** Use *High* (90) if storage isn't a concern
 - **Archival:** Disable compression entirely to preserve original source quality

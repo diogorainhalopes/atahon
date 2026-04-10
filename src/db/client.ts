@@ -60,13 +60,4 @@ export function runMigrations(): void {
     }
   }
 
-  // Seed default extension repo if not present
-  const repos = expo.getAllSync('SELECT id FROM extension_repo LIMIT 1');
-  if (repos.length === 0) {
-    const now = Math.floor(Date.now() / 1000);
-    expo.runSync(
-      'INSERT OR IGNORE INTO extension_repo (url, name, enabled, created_at) VALUES (?, ?, ?, ?)',
-      ['https://raw.githubusercontent.com/keiyoushi/extensions/repo/index.min.json', 'Keiyoushi', 1, now],
-    );
-  }
 }
