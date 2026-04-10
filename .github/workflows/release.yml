@@ -30,12 +30,30 @@ jobs:
 
       - run: npm ci
 
+      - name: Stamp version into app.json
+        run: |
+          VERSION=$(python scripts/release.py version)
+          # Strip leading 'v' for semver field (e.g. v0.1.0 → 0.1.0)
+          SEMVER="${VERSION#v}"
+          node -e "
+            const fs = require('fs');
+            const cfg = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            cfg.expo.version = '${SEMVER}';
+            fs.writeFileSync('app.json', JSON.stringify(cfg, null, 2) + '\n');
+          "
+          echo "Stamped version $SEMVER into app.json"
+
       - run: npx expo prebuild --clean
 
       - name: Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+        run: |
+          echo -n "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+          echo "Keystore size: $(wc -c < android/app/release.keystore) bytes"
+          echo "Keystore SHA-256: $(sha256sum android/app/release.keystore | cut -d' ' -f1)"
+          keytool -list -keystore android/app/release.keystore \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}"
 
       - name: Build release APK
         run: |

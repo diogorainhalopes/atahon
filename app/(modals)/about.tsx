@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   Image,
+  Linking,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { X } from 'lucide-react-native';
@@ -43,6 +44,9 @@ export default function AboutScreen() {
             <Text style={styles.description}>
               A modern manga reader with full extension support for seamless manga browsing and reading.
             </Text>
+            <TouchableOpacity onPress={() => Linking.openURL('https://diogorainhalopes.github.io/atahon/')}>
+              <Text style={styles.docsLink}>Documentation</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
@@ -54,14 +58,14 @@ export default function AboutScreen() {
             </Text>
           </View>
 
-          {/* Thanks to Mihon */} 
-          <View style={styles.card}> 
-            <Text style={styles.cardTitle}>Thanks to Mihon</Text> 
-            <Text style={styles.cardDescription}> 
-              Atahon is inspired by and built on the Mihon/Tachiyomi extension ecosystem. 
-              We're grateful for the open-source manga reader community and their 
-              incredible work on extension compatibility and manga source management. 
-            </Text> 
+          {/* Thanks to Mihon */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Thanks to Mihon</Text>
+            <Text style={styles.cardDescription}>
+              Atahon is inspired by and built on the Mihon/Tachiyomi extension ecosystem.
+              We're grateful for the open-source manga reader community and their
+              incredible work on extension compatibility and manga source management.
+            </Text>
           </View>
 
         </ScrollView>
@@ -113,7 +117,6 @@ const styles = StyleSheet.create({
   },
   section: {
     alignItems: 'center',
-    marginBottom: spacing[6],
   },
   appName: {
     fontSize: typography.sizes['2xl'],
@@ -128,6 +131,12 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     color: colors.text.secondary,
     textAlign: 'center',
+  },
+  docsLink: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.semibold,
+    color: colors.accent.DEFAULT,
+    marginTop: spacing[2],
   },
   card: {
     backgroundColor: colors.surface.DEFAULT,
