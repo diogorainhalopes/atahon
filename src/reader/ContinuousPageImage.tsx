@@ -24,9 +24,10 @@ interface ContinuousPageImageProps {
   onRetry: (index: number) => void;
   onImageError: (index: number) => void;
   onTap?: () => void;
+  onLongPress?: () => void;
 }
 
-function ContinuousPageImageInner({ page, connectPages, onRetry, onImageError, onTap }: ContinuousPageImageProps) {
+function ContinuousPageImageInner({ page, connectPages, onRetry, onImageError, onTap, onLongPress }: ContinuousPageImageProps) {
   const [displayHeight, setDisplayHeight] = useState(SCREEN_HEIGHT);
   const containerHeight = useSharedValue(SCREEN_HEIGHT);
 
@@ -153,10 +154,19 @@ function ContinuousPageImageInner({ page, connectPages, onRetry, onImageError, o
       if (onTap) runOnJS(onTap)();
     });
 
+  // ─── Long press to show settings ────────────────────────────────────
+  const longPress = Gesture.LongPress()
+    .minDuration(500)
+    .onEnd(() => {
+      'worklet';
+      if (onLongPress) runOnJS(onLongPress)();
+    });
+
   // ─── Compose gestures ─────────────────────────────────────────────
   const pinchPan = Gesture.Simultaneous(pinch, pan);
   const taps = Gesture.Exclusive(doubleTap, singleTap);
-  const gesture = Gesture.Race(pinchPan, taps);
+  const pressAndTaps = Gesture.Exclusive(longPress, taps);
+  const gesture = Gesture.Race(pinchPan, pressAndTaps);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
