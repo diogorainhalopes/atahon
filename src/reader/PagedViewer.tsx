@@ -20,6 +20,7 @@ interface PagedViewerProps {
   onRetryPage: (index: number) => void;
   onImageError: (index: number) => void;
   onCenterTap?: () => void;
+  onLongPress?: () => void;
   onChapterNavigate: (chapterId: number) => void;
 }
 
@@ -37,6 +38,7 @@ export const PagedViewer = forwardRef<PagerView, PagedViewerProps>(function Page
     onRetryPage,
     onImageError,
     onCenterTap,
+    onLongPress,
     onChapterNavigate,
   },
   ref,
@@ -116,6 +118,7 @@ export const PagedViewer = forwardRef<PagerView, PagedViewerProps>(function Page
             onRetry={onRetryPage}
             onTapZone={handleTapZone}
             onImageError={onImageError}
+            onLongPress={onLongPress}
           />
         </View>
       ))}

@@ -14,9 +14,10 @@ interface PageImageProps {
   onRetry: (index: number) => void;
   onTapZone: (zone: TapZone) => void;
   onImageError: (index: number) => void;
+  onLongPress?: () => void;
 }
 
-function PageImageInner({ page, scaleType, onRetry, onTapZone, onImageError }: PageImageProps) {
+function PageImageInner({ page, scaleType, onRetry, onTapZone, onImageError, onLongPress }: PageImageProps) {
   if (page.state === 'queue' || page.state === 'loading') {
     return (
       <View style={styles.container}>
@@ -42,6 +43,7 @@ function PageImageInner({ page, scaleType, onRetry, onTapZone, onImageError }: P
       uri={page.imageUrl!}
       scaleType={scaleType}
       onTapZone={onTapZone}
+      onLongPress={onLongPress}
       onError={() => onImageError(page.index)}
     />
   );

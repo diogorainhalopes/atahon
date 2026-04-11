@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -15,6 +15,7 @@ import { useChapterNavigation } from '@reader/useChapterNavigation';
 import { PagedViewer } from '@reader/PagedViewer';
 import { WebtoonViewer } from '@reader/WebtoonViewer';
 import { ReaderOverlay } from '@reader/ReaderOverlay';
+import { ReaderSettingsSheet } from '@reader/ReaderSettingsSheet';
 import { useKeepScreenOn } from '@reader/useKeepScreenOn';
 
 export default function ReaderScreen() {
@@ -23,6 +24,8 @@ export default function ReaderScreen() {
     mangaId: string;
     chapterId: string;
   }>();
+
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const numericChapterId = parseInt(chapterId, 10);
   const pagerRef = useRef<PagerView>(null);
@@ -128,6 +131,10 @@ export default function ReaderScreen() {
     [setCurrentPage, readingMode],
   );
 
+  const handleLongPress = useCallback(() => {
+    setSettingsVisible(true);
+  }, []);
+
   // Loading state
   if (chapterLoading || isOfflineChecking || (pagesLoading && pages.length === 0)) {
     return (
@@ -181,6 +188,7 @@ export default function ReaderScreen() {
             onRetryPage={retryPage}
             onImageError={markPageError}
             onCenterTap={toggleOverlay}
+            onLongPress={handleLongPress}
             onChapterNavigate={navigateToChapter}
             connectPages={connectPages}
           />
@@ -199,6 +207,7 @@ export default function ReaderScreen() {
             onRetryPage={retryPage}
             onImageError={markPageError}
             onCenterTap={toggleOverlay}
+            onLongPress={handleLongPress}
             onChapterNavigate={navigateToChapter}
           />
         )}
@@ -219,6 +228,11 @@ export default function ReaderScreen() {
           totalPages={totalPages}
           pages={pages}
           onSeekPage={handleSeekPage}
+        />
+
+        <ReaderSettingsSheet
+          visible={settingsVisible}
+          onClose={() => setSettingsVisible(false)}
         />
       </View>
     </>
