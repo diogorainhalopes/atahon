@@ -15,7 +15,6 @@ import { useChapterNavigation } from '@reader/useChapterNavigation';
 import { PagedViewer } from '@reader/PagedViewer';
 import { WebtoonViewer } from '@reader/WebtoonViewer';
 import { ReaderOverlay } from '@reader/ReaderOverlay';
-import { ReaderSettingsSheet } from '@reader/ReaderSettingsSheet';
 import { useKeepScreenOn } from '@reader/useKeepScreenOn';
 
 export default function ReaderScreen() {
@@ -24,8 +23,6 @@ export default function ReaderScreen() {
     mangaId: string;
     chapterId: string;
   }>();
-
-  const [settingsVisible, setSettingsVisible] = useState(false);
 
   const numericChapterId = parseInt(chapterId, 10);
   const pagerRef = useRef<PagerView>(null);
@@ -132,8 +129,8 @@ export default function ReaderScreen() {
   );
 
   const handleLongPress = useCallback(() => {
-    setSettingsVisible(true);
-  }, []);
+    toggleOverlay();
+  }, [toggleOverlay]);
 
   // Loading state
   if (chapterLoading || isOfflineChecking || (pagesLoading && pages.length === 0)) {
@@ -228,11 +225,6 @@ export default function ReaderScreen() {
           totalPages={totalPages}
           pages={pages}
           onSeekPage={handleSeekPage}
-        />
-
-        <ReaderSettingsSheet
-          visible={settingsVisible}
-          onClose={() => setSettingsVisible(false)}
         />
       </View>
     </>
