@@ -25,6 +25,7 @@ import {
   useToggleRepo,
   useRemoveRepo,
 } from '@queries/extensions';
+import { DuplicateRepoModal } from '@components/DuplicateRepoModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -84,6 +85,8 @@ function RepoRow({ repo, onDelete, disabled = false, onReEnable }: RepoRowProps)
 export default function ReposScreen() {
   const [url, setUrl] = useState('');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateUrl, setDuplicateUrl] = useState('');
 
   const { data: repos = [], isLoading } = useRepos();
   const addMutation = useAddRepo();
@@ -136,7 +139,13 @@ export default function ReposScreen() {
       await addMutation.mutateAsync({ url: trimUrl, name });
       setUrl('');
     } catch (e: unknown) {
-      Alert.alert('Error', e instanceof Error ? e.message : 'Failed to add repository');
+      const message = e instanceof Error ? e.message : 'Failed to add repository';
+      if (message.includes('already in your list')) {
+        setDuplicateUrl(trimUrl);
+        setShowDuplicateModal(true);
+      } else {
+        Alert.alert('Error', message);
+      }
     }
   }
 
@@ -172,6 +181,13 @@ export default function ReposScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Extension Repositories' }} />
+
+      {/* Duplicate repo modal */}
+      <DuplicateRepoModal
+        visible={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        repoUrl={duplicateUrl}
+      />
 
       {/* Clear confirmation modal */}
       <Modal
