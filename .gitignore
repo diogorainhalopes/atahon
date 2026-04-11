@@ -2,8 +2,9 @@ node_modules/
 .expo/
 dist/
 build/
-ios/
-android/
+/ios/
+/android/
+.gradle/
 
 # Generated native files (re-created by expo prebuild)
 # android/ and ios/ are gitignored — use EAS Build for production

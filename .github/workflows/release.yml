@@ -45,10 +45,6 @@ jobs:
 
       - run: npx expo prebuild --clean
 
-      - name: Patch settings.gradle to include local modules search path
-        run: |
-          sed -i 's|expoAutolinking.useExpoModules()|expoAutolinking {\n  searchPaths = ["../node_modules", "../modules"]\n}\nexpoAutolinking.useExpoModules()|' android/settings.gradle
-
       - name: Decode keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
