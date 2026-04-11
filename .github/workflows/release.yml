@@ -75,10 +75,20 @@ jobs:
           git tag ${{ steps.release_info.outputs.version }}
           git push origin ${{ steps.release_info.outputs.version }}
 
+      - name: Rename APK to Atahon-{version}.apk
+        run: |
+          VERSION="${{ steps.release_info.outputs.version }}"
+          # Remove leading 'v' for the filename (e.g. v0.1.0 → 0.1.0)
+          SEMVER="${VERSION#v}"
+          mv android/app/build/outputs/apk/release/app-release.apk \
+             android/app/build/outputs/apk/release/Atahon-${SEMVER}.apk
+
       - name: Create GitHub Release
         run: |
+          VERSION="${{ steps.release_info.outputs.version }}"
+          SEMVER="${VERSION#v}"
           gh release create ${{ steps.release_info.outputs.version }} \
-            android/app/build/outputs/apk/release/app-release.apk \
+            android/app/build/outputs/apk/release/Atahon-${SEMVER}.apk \
             --title "${{ steps.release_info.outputs.version }}" \
             --notes-file release-notes.md
         env:
