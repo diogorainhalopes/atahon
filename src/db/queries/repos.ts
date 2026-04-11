@@ -11,11 +11,19 @@ export async function getEnabledRepos(): Promise<ExtensionRepo[]> {
 }
 
 export async function addRepo(url: string, name: string): Promise<ExtensionRepo> {
-  const rows = await db
-    .insert(extensionRepo)
-    .values({ url, name })
-    .returning();
-  return rows[0];
+  try {
+    const rows = await db
+      .insert(extensionRepo)
+      .values({ url, name })
+      .returning();
+    return rows[0];
+  } catch (error) {
+    // Handle duplicate URL constraint violation
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      throw new Error('This repository URL is already in your list.');
+    }
+    throw error;
+  }
 }
 
 export async function removeRepo(id: number): Promise<void> {
