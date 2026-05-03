@@ -4,11 +4,18 @@ import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold, Geist_800ExtraBold } from '@expo-google-fonts/geist';
+import { useFonts } from '@expo-google-fonts/exo-2';
+import {
+  Exo2_400Regular,
+  Exo2_500Medium,
+  Exo2_600SemiBold,
+  Exo2_700Bold,
+} from '@expo-google-fonts/exo-2';
 import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from '@theme/ThemeProvider';
 
 import { runMigrations } from '@db/client';
 import { restoreQueueOnStartup } from '@db/queries/downloads';
@@ -31,12 +38,11 @@ export const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    'Geist-Regular': Geist_400Regular,
-    'Geist-Medium': Geist_500Medium,
-    'Geist-SemiBold': Geist_600SemiBold,
-    'Geist-Bold': Geist_700Bold,
-    'Geist-ExtraBold': Geist_800ExtraBold,
-    'Geist-Mono': GeistMono_400Regular,
+    'Exo2-Regular':   Exo2_400Regular,
+    'Exo2-Medium':    Exo2_500Medium,
+    'Exo2-SemiBold':  Exo2_600SemiBold,
+    'Exo2-Bold':      Exo2_700Bold,
+    'Geist-Mono':     GeistMono_400Regular,
   });
   const [appReady, setAppReady] = useState(false);
 
@@ -92,26 +98,28 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <StatusBar style="light" backgroundColor="#0A0A0F" />
+          <ThemeProvider>
+          <StatusBar style="light" backgroundColor="#080808" />
 
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(modals)" options={{ presentation: 'transparentModal', headerShown: false, }} />
-            <Stack.Screen name="extensions" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="downloads" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
-            <Stack.Screen name="buckets" options={{ animation: 'slide_from_right' }} />
+          <Stack screenOptions={{ headerShown: false, animation: 'fade_from_bottom', animationDuration: 320 }}>
+            <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+            <Stack.Screen name="(modals)" options={{ presentation: 'transparentModal', headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="extensions" options={{ animation: 'fade_from_bottom', animationDuration: 320 }} />
+            <Stack.Screen name="downloads" options={{ animation: 'fade_from_bottom', animationDuration: 320 }} />
+            <Stack.Screen name="settings" options={{ animation: 'fade_from_bottom', animationDuration: 320 }} />
+            <Stack.Screen name="buckets" options={{ animation: 'fade_from_bottom', animationDuration: 320 }} />
 
             <Stack.Screen
               name="manga/[mangaId]/index"
-              options={{ animation: 'slide_from_right' }}
+              options={{ animation: 'fade_from_bottom', animationDuration: 320 }}
             />
 
             <Stack.Screen
               name="manga/[mangaId]/reader/[chapterId]"
-              options={{ animation: 'fade' }}
+              options={{ animation: 'fade_from_bottom', animationDuration: 300 }}
             />
           </Stack>
+          </ThemeProvider>
 
         </QueryClientProvider>
       </SafeAreaProvider>
