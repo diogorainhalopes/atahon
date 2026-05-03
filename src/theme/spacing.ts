@@ -25,20 +25,20 @@ export const spacing = {
 
 export const radius = {
   none: 0,
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
+  sm:   4,
+  md:   6,
+  lg:   10,
+  xl:   14,
   '2xl': 20,
   '3xl': 24,
   full: 9999,
+  pill: 9999,
 } as const;
 
 export const iconSize = {
-  xs: 14,
-  sm: 16,
-  md: 20,
-  lg: 24,
-  xl: 28,
-  '2xl': 32,
+  xs: 16,
+  sm: 20,
+  md: 24,
+  lg: 28,
+  xl: 32,
 } as const;

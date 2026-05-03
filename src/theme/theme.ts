@@ -47,7 +47,7 @@ export const darkTheme: typeof lightTheme = {
 export type Theme = typeof lightTheme;
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export const radius = { sm: 6, md: 10, lg: 14, xl: 20, pill: 9999 } as const;
+export const radius = { sm: 4, md: 6, lg: 10, xl: 14, pill: 9999 } as const;
 
 export const space = {
   xs: 4,
