@@ -1,14 +1,9 @@
 import { StyleSheet } from 'react-native';
 import { colors } from './colors';
-import { typography } from './typography';
+import { typography, fontFamily } from './typography';
 import { spacing, radius } from './spacing';
 
-/**
- * Shared style presets for consistent UI patterns across the app.
- * Screens compose from these with: style={[commonStyles.x, styles.y]}
- */
 export const commonStyles = StyleSheet.create({
-  // Page-level header container (Library, Browse, Updates, History, More)
   pageHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -19,57 +14,55 @@ export const commonStyles = StyleSheet.create({
     borderBottomColor: colors.border.DEFAULT,
   },
 
-  // Page title text ("Library", "Browse", etc.)
   pageTitle: {
-    fontSize: typography.sizes['2xl'],
-    fontWeight: typography.weights.bold,
+    fontSize: typography.sizes.h1,
+    fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    lineHeight: typography.lineHeights.h1,
+    letterSpacing: -0.4,
   },
 
-  // Section label (navigation group labels: used by More, Settings, Extensions, Repos, [pkgName])
-  // These are the uppercase, smaller, muted labels like "Downloads", "Privacy", "Extensions"
   sectionLabel: {
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.semibold,
     fontWeight: typography.weights.semibold,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wider,
+    letterSpacing: typography.letterSpacing.label,
   },
 
-  // Card container for grouped items (settings groups, menu items, repo entries)
   sectionCard: {
     backgroundColor: colors.background.card,
-    borderRadius: radius.xl,
+    borderRadius: radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border.subtle,
+    borderColor: colors.border.DEFAULT,
   },
 
-  // Horizontal divider within cards and lists
   divider: {
     height: 1,
-    backgroundColor: colors.border.subtle,
+    backgroundColor: colors.border.DEFAULT,
   },
 
-  // Standard list row (consistent flex layout + padding for settings, menu items, chapter rows)
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
+    minHeight: 56,
   },
 });
 
-/**
- * Shared Stack screen header configuration for extensions, settings, downloads layouts.
- * Used via: screenOptions={{ ...defaultStackScreenOptions }}
- */
 export const defaultStackScreenOptions = {
   headerStyle: { backgroundColor: colors.background.DEFAULT },
   headerTintColor: colors.text.primary,
   headerTitleStyle: {
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.h3,
+    fontFamily: fontFamily.semibold,
     fontWeight: typography.weights.semibold as '600',
   },
   headerShadowVisible: false,
+  animation: 'fade' as const,
+  animationDuration: 400,
 } as const;

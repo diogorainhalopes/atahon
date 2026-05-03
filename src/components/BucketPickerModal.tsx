@@ -58,7 +58,7 @@ export function BucketPickerModal({ visible, onClose, mangaId }: BucketPickerMod
             <View style={styles.header}>
               <Text style={styles.title}>Add to Bucket</Text>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <X size={24} color={colors.text.primary} />
+                <X size={24} color={colors.text.primary} strokeWidth={1.5} />
               </TouchableOpacity>
             </View>
 
@@ -146,9 +146,11 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border.DEFAULT,
   },
   title: {
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.h2,
     fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    letterSpacing: -0.2,
   },
 
   // Content

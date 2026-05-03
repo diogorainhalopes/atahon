@@ -113,9 +113,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing[4],
   },
   sheetTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.bold,
+    fontSize: typography.sizes.h2,
+    fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    letterSpacing: -0.2,
     marginBottom: spacing[4],
   },
   toggleRow: {

@@ -27,7 +27,7 @@ export function AboutModal({ visible, onClose }: AboutModalProps) {
           <View style={styles.header}>
             <Text style={styles.title}>About</Text>
             <TouchableOpacity onPress={onClose} hitSlop={8}>
-              <X size={24} color={colors.text.primary} />
+              <X size={24} color={colors.text.primary} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
 
@@ -95,9 +95,11 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border.DEFAULT,
   },
   title: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.bold,
+    fontSize: typography.sizes.h2,
+    fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    letterSpacing: -0.2,
   },
   content: {
     paddingHorizontal: spacing[5],
@@ -108,9 +110,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing[6],
   },
   appName: {
-    fontSize: typography.sizes['2xl'],
-    fontFamily: fontFamily.bold,
+    fontSize: typography.sizes.h1,
+    fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.accent.DEFAULT,
+    letterSpacing: -0.4,
+    lineHeight: typography.lineHeights.h1,
     marginBottom: spacing[2],
   },
   version: {
@@ -134,8 +139,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cardTitle: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.h3,
     fontFamily: fontFamily.semibold,
+    fontWeight: typography.weights.semibold,
     color: colors.accent.DEFAULT,
     marginBottom: spacing[2],
   },
