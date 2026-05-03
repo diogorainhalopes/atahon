@@ -11,6 +11,7 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@expo-google-fonts/exo-2": "^0.4.2",
     "@expo-google-fonts/geist": "^0.4.1",
     "@expo-google-fonts/geist-mono": "^0.4.1",
     "@react-native-async-storage/async-storage": "2.2.0",
