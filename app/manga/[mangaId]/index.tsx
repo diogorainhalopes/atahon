@@ -42,6 +42,7 @@ import {
   EyeSlash,
   X,
   Stack as PhosphorStack,
+  Stop,
 } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
@@ -57,7 +58,11 @@ import {
   useLastReadChapter,
   useBulkMarkRead,
 } from '@queries/manga';
-import { useEnqueueDownload, useBulkEnqueueDownload } from '@queries/downloads';
+import {
+  useEnqueueDownload,
+  useBulkEnqueueDownload,
+  useCancelMangaDownloads,
+} from '@queries/downloads';
 import { useMergedExtensions, useRepos } from '@queries/extensions';
 import { useDownloadStore } from '@stores/downloadStore';
 import { useSettingsStore } from '@stores/settingsStore';
@@ -243,6 +248,17 @@ export default function MangaDetailScreen() {
   const toggleSmartDownloads = useToggleSmartDownloads();
   const enqueueDownload = useEnqueueDownload();
   const bulkEnqueueDownload = useBulkEnqueueDownload();
+  const cancelMangaDownloads = useCancelMangaDownloads();
+
+  const hasActiveDownloads = useDownloadStore((s) =>
+    manga
+      ? s.queue.some(
+          (q) =>
+            q.mangaId === manga.id &&
+            (q.status === 'queued' || q.status === 'downloading'),
+        )
+      : false,
+  );
   const bulkMarkRead = useBulkMarkRead();
 
   // UI state
@@ -406,6 +422,11 @@ export default function MangaDetailScreen() {
       });
     }
   }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
+
+  const handleCancelAll = useCallback(() => {
+    if (!manga) return;
+    cancelMangaDownloads.mutate({ mangaId: manga.id });
+  }, [manga, cancelMangaDownloads]);
 
   const handleDownloadNew = useCallback(() => {
     if (!manga || !chapters) return;
@@ -669,8 +690,21 @@ export default function MangaDetailScreen() {
             {filteredChapters.length}{filterMode !== 'all' ? ` / ${chapters?.length ?? 0}` : ''} Chapters
           </Text>
           <View style={styles.chapterActions}>
-            {chapters && chapters.length > 0 && chapters.some((ch) => ch.downloadStatus === 0) && (
-              <>
+            {hasActiveDownloads ? (
+              <TouchableOpacity
+                onPress={handleCancelAll}
+                activeOpacity={0.7}
+                hitSlop={8}
+                disabled={cancelMangaDownloads.isPending}
+              >
+                <Stop
+                  size={18}
+                  color={cancelMangaDownloads.isPending ? colors.text.muted : colors.text.secondary}
+                  weight="fill"
+                />
+              </TouchableOpacity>
+            ) : (
+              chapters && chapters.length > 0 && chapters.some((ch) => ch.downloadStatus === 0) && (
                 <TouchableOpacity
                   onPress={handleDownloadAll}
                   activeOpacity={0.7}
@@ -682,7 +716,7 @@ export default function MangaDetailScreen() {
                     color={bulkEnqueueDownload.isPending ? colors.text.muted : colors.text.secondary}
                   />
                 </TouchableOpacity>
-              </>
+              )
             )}
             {manga.initialized && (
               <TouchableOpacity
@@ -738,8 +772,11 @@ export default function MangaDetailScreen() {
     handleRefresh,
     handleDownloadAll,
     handleDownloadNew,
+    handleCancelAll,
+    hasActiveDownloads,
     fetchChapters.isPending,
     bulkEnqueueDownload.isPending,
+    cancelMangaDownloads.isPending,
   ]);
 
   // ─── Render ─────────────────────────────────────────────────────────
