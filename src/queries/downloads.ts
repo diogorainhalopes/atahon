@@ -266,23 +266,36 @@ export function useCancelMangaDownloads() {
       const store = useDownloadStore.getState();
       const itemsToCancel = store.queue.filter(
         (q) =>
-          q.mangaId === mangaId && (q.status === 'queued' || q.status === 'downloading'),
+          q.mangaId === mangaId &&
+          q.status !== 'completed' &&
+          q.status !== 'error',
       );
 
       if (itemsToCancel.length === 0) {
         return { mangaId, cancelledCount: 0 };
       }
 
-      const downloadingItems = itemsToCancel.filter((q) => q.status === 'downloading');
-      for (const item of downloadingItems) {
-        store.markCancelled(item.chapterId);
-        await deleteChapterFiles(mangaId, item.chapterId);
+      const cancelledIds = itemsToCancel.map((q) => q.chapterId);
+      const downloadingIds = itemsToCancel
+        .filter((q) => q.status === 'downloading')
+        .map((q) => q.chapterId);
+
+      // SYNC FIRST: mark every targeted chapter as cancelled and drop them
+      // from the queue before yielding to the event loop. This closes the race
+      // where the worker's pump() picks up the next queued chapter while we're
+      // still awaiting filesystem/DB cleanup.
+      for (const id of cancelledIds) {
+        store.markCancelled(id);
+      }
+      store.removeMany(cancelledIds);
+
+      // ASYNC: clean up partial files for chapters that were mid-download.
+      for (const id of downloadingIds) {
+        await deleteChapterFiles(mangaId, id);
       }
 
-      const cancelledIds = itemsToCancel.map((q) => q.chapterId);
+      // ASYNC: clear DB queue rows and reset chapter.downloadStatus to 0.
       await bulkDeleteDownloadEntries(cancelledIds);
-
-      store.removeMany(cancelledIds);
 
       return { mangaId, cancelledCount: cancelledIds.length };
     },
