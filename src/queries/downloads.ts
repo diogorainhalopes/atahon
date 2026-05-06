@@ -3,6 +3,7 @@ import {
   enqueueChapter,
   bulkEnqueueChapters,
   deleteDownloadEntry,
+  bulkDeleteDownloadEntries,
   getActiveDownloads,
   getCompletedDownloads,
   deleteAllCompletedDownloads,
@@ -245,6 +246,48 @@ export function useDeleteMangaDownloads() {
     onSuccess: ({ mangaId }) => {
       queryClient.invalidateQueries({ queryKey: downloadKeys.active() });
       queryClient.invalidateQueries({ queryKey: downloadKeys.completed() });
+      queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
+    },
+  });
+}
+
+/**
+ * Cancel all active (queued + downloading) downloads for a single manga.
+ * For the in-flight chapter (if it belongs to this manga) this:
+ *   - flips the cancellation flag so the worker bails on its next await,
+ *   - deletes the partial chapter directory so any in-flight FS writes fail.
+ * Then it bulk-clears the DB queue rows and the Zustand queue entries.
+ */
+export function useCancelMangaDownloads() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ mangaId }: { mangaId: number }) => {
+      const store = useDownloadStore.getState();
+      const itemsToCancel = store.queue.filter(
+        (q) =>
+          q.mangaId === mangaId && (q.status === 'queued' || q.status === 'downloading'),
+      );
+
+      if (itemsToCancel.length === 0) {
+        return { mangaId, cancelledCount: 0 };
+      }
+
+      const downloadingItems = itemsToCancel.filter((q) => q.status === 'downloading');
+      for (const item of downloadingItems) {
+        store.markCancelled(item.chapterId);
+        await deleteChapterFiles(mangaId, item.chapterId);
+      }
+
+      const cancelledIds = itemsToCancel.map((q) => q.chapterId);
+      await bulkDeleteDownloadEntries(cancelledIds);
+
+      store.removeMany(cancelledIds);
+
+      return { mangaId, cancelledCount: cancelledIds.length };
+    },
+    onSuccess: ({ mangaId }) => {
+      queryClient.invalidateQueries({ queryKey: downloadKeys.active() });
       queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(mangaId) });
     },
   });
