@@ -13,6 +13,19 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const MODULE = 'DownloadWorker';
 
+class DownloadCancelledError extends Error {
+  constructor(chapterId: number) {
+    super(`Download cancelled for chapter ${chapterId}`);
+    this.name = 'DownloadCancelledError';
+  }
+}
+
+function throwIfCancelled(chapterId: number): void {
+  if (useDownloadStore.getState().cancelledChapterIds.has(chapterId)) {
+    throw new DownloadCancelledError(chapterId);
+  }
+}
+
 let isWorkerRunning = false;
 let activeJobsCount = 0;
 
@@ -107,12 +120,14 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
     Logger.info(MODULE, `   - Chapter URL: ${chapterUrl}`);
 
     // Step 1: Update status to downloading
+    throwIfCancelled(chapterId);
     useDownloadStore.getState().updateStatus(chapterId, 'downloading');
     await updateDownloadProgress(chapterId, 0, 1); // 1 = downloading
 
     // Step 2: Fetch page list from extension
     Logger.info(MODULE, `🔵 [Chapter ${chapterId}] Fetching page list...`);
     const pages = await ExtensionBridge.getPageList(sourceId, chapterUrl);
+    throwIfCancelled(chapterId);
     Logger.info(MODULE, `🔵 [Chapter ${chapterId}] Got ${pages.length} pages`);
     if (pages.length === 0) {
       throw new Error('No pages returned from extension');
@@ -139,6 +154,7 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
     // Batch download up to 3 pages concurrently
     const BATCH_SIZE = 3;
     for (let i = 0; i < pages.length; i += BATCH_SIZE) {
+      throwIfCancelled(chapterId);
       const batch = pages.slice(i, i + BATCH_SIZE);
 
       // Resolve image URLs in parallel
@@ -160,6 +176,7 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
       // Download images in parallel
       await Promise.all(
         resolvedUrls.map(async ({ page, imageUrl }) => {
+          throwIfCancelled(chapterId);
           // Check if download was cancelled (directory deleted)
           const dirExists = await FileSystem.getInfoAsync(chapterDir(mangaId, chapterId));
           if (!dirExists.exists) {
@@ -223,6 +240,17 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
 
     Logger.info(MODULE, `✓ Downloaded chapter ${chapterId}`);
   } catch (e) {
+    const wasCancelled =
+      e instanceof DownloadCancelledError ||
+      useDownloadStore.getState().cancelledChapterIds.has(chapterId);
+
+    if (wasCancelled) {
+      Logger.info(MODULE, `🛑 [Chapter ${chapterId}] Download cancelled`);
+      useDownloadStore.getState().clearCancelled(chapterId);
+      // The cancel mutation owns DB cleanup and store removal — nothing else to do.
+      return;
+    }
+
     const errorMessage = e instanceof Error ? e.message : String(e);
     Logger.error(MODULE, `✗ Failed to download chapter ${chapterId}:`, errorMessage);
 
