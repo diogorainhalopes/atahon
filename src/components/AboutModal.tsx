@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Pressable } from 'react-native';
 import Constants from 'expo-constants';
-import { X } from 'lucide-react-native';
+import { X } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -27,7 +27,7 @@ export function AboutModal({ visible, onClose }: AboutModalProps) {
           <View style={styles.header}>
             <Text style={styles.title}>About</Text>
             <TouchableOpacity onPress={onClose} hitSlop={8}>
-              <X size={24} color={colors.text.primary} strokeWidth={1.5} />
+              <X size={24} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
 
@@ -120,11 +120,13 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     marginBottom: spacing[3],
   },
   description: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: typography.lineHeights.relaxed,
@@ -147,6 +149,7 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.lineHeights.relaxed,
   },

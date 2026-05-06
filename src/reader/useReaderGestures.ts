@@ -61,9 +61,9 @@ export function useReaderGestures({
     .onEnd(() => {
       'worklet';
       if (scale.value < 1.05) {
-        scale.value = withSpring(1, { damping: 15 });
-        translateX.value = withSpring(0, { damping: 15 });
-        translateY.value = withSpring(0, { damping: 15 });
+        scale.value = withSpring(1, { damping: 20 });
+        translateX.value = withSpring(0, { damping: 20 });
+        translateY.value = withSpring(0, { damping: 20 });
       }
     });
 
@@ -115,14 +115,14 @@ export function useReaderGestures({
 
       // Spring back if out of bounds
       if (translateX.value > maxTranslateX) {
-        translateX.value = withSpring(maxTranslateX, { damping: 15 });
+        translateX.value = withSpring(maxTranslateX, { damping: 20 });
       } else if (translateX.value < -maxTranslateX) {
-        translateX.value = withSpring(-maxTranslateX, { damping: 15 });
+        translateX.value = withSpring(-maxTranslateX, { damping: 20 });
       }
       if (translateY.value > maxTranslateY) {
-        translateY.value = withSpring(maxTranslateY, { damping: 15 });
+        translateY.value = withSpring(maxTranslateY, { damping: 20 });
       } else if (translateY.value < -maxTranslateY) {
-        translateY.value = withSpring(-maxTranslateY, { damping: 15 });
+        translateY.value = withSpring(-maxTranslateY, { damping: 20 });
       }
     });
 

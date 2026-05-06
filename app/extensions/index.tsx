@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.primary,
   },
   listContent: {
@@ -308,6 +309,7 @@ const styles = StyleSheet.create({
   },
   rowMeta: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
   actionBtn: {
@@ -331,10 +333,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   errorText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.status.error,
   },
 });

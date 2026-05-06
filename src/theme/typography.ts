@@ -1,16 +1,14 @@
 export const fontFamily = {
-  regular:  'Exo2-Regular',
-  medium:   'Exo2-Medium',
-  semibold: 'Exo2-SemiBold',
-  bold:     'Exo2-Bold',
-  mono:     'Geist-Mono',
+  regular:  'Exo2_400Regular',
+  medium:   'Exo2_500Medium',
+  semibold: 'Exo2_600SemiBold',
+  bold:     'Exo2_700Bold',
 } as const;
 
 export const typography = {
   fonts: {
-    sans:    'Exo2-Regular',
-    display: 'Exo2-Bold',
-    mono:    'Geist-Mono',
+    sans:    'Exo2_400Regular',
+    display: 'Exo2_700Bold',
   },
   sizes: {
     xs:      11,

@@ -4,7 +4,7 @@ import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import PagerView from 'react-native-pager-view';
 import type { FlashListRef } from '@shopify/flash-list';
-import { ChevronLeft } from 'lucide-react-native';
+import { CaretLeft } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { useReaderStore } from '@stores/readerStore';
@@ -159,7 +159,7 @@ export default function ReaderScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ChevronLeft size={20} color={colors.text.primary} />
+            <CaretLeft size={20} color={colors.text.primary} />
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -243,10 +243,12 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   errorText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.status.error,
     textAlign: 'center',
     paddingHorizontal: 24,
@@ -278,6 +280,7 @@ const styles = StyleSheet.create({
   },
   pageIndicatorText: {
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.medium,
     color: '#fff',
     fontVariant: ['tabular-nums'],
   },

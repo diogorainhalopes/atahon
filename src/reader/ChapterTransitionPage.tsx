@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { CaretLeft, CaretRight } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -19,7 +19,7 @@ export function ChapterTransitionPage({
   onNavigate,
 }: ChapterTransitionPageProps) {
   const isPrev = direction === 'prev';
-  const Icon = isPrev ? ChevronLeft : ChevronRight;
+  const Icon = isPrev ? CaretLeft : CaretRight;
   const hasTarget = targetChapter != null;
 
   return (
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   },
   noMoreText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
     paddingVertical: spacing[3],

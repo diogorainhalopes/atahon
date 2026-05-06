@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
-import { Check, X } from 'lucide-react-native';
+import { Check, X } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -58,7 +58,7 @@ export function BucketPickerModal({ visible, onClose, mangaId }: BucketPickerMod
             <View style={styles.header}>
               <Text style={styles.title}>Add to Bucket</Text>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <X size={24} color={colors.text.primary} strokeWidth={1.5} />
+                <X size={24} color={colors.text.primary} />
               </TouchableOpacity>
             </View>
 
@@ -90,7 +90,7 @@ export function BucketPickerModal({ visible, onClose, mangaId }: BucketPickerMod
                       </View>
                       {isSelected && (
                         <View style={styles.checkmarkContainer}>
-                          <Check size={20} color={colors.accent.DEFAULT} strokeWidth={3} />
+                          <Check size={20} color={colors.accent.DEFAULT} />
                         </View>
                       )}
                     </TouchableOpacity>
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },

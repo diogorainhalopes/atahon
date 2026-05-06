@@ -1053,6 +1053,7 @@ const styles = StyleSheet.create({
   },
   authorArtist: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
   statusBadge: {
@@ -1067,6 +1068,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.lineHeights.relaxed,
   },
@@ -1084,6 +1086,7 @@ const styles = StyleSheet.create({
   },
   sourceInfo: {
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     lineHeight: 16,
   },
@@ -1172,6 +1175,7 @@ const styles = StyleSheet.create({
   },
   chapterLoadingText: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
 

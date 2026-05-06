@@ -7,8 +7,8 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@theme/colors';
-import { spacing } from '@theme/spacing';
+import { useTheme } from '@theme/ThemeProvider';
+import { space } from '@theme/theme';
 
 type ScreenProps = {
   children: ReactNode;
@@ -16,19 +16,13 @@ type ScreenProps = {
   padded?: boolean;
 };
 
-export default function Screen({
-  children,
-  scroll = false,
-  padded = true,
-}: ScreenProps) {
+export default function Screen({ children, scroll = false, padded = true }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const t = useTheme();
 
   const content = scroll ? (
     <ScrollView
-      contentContainerStyle={[
-        styles.content,
-        padded && styles.padded,
-      ]}
+      contentContainerStyle={[styles.content, padded && styles.padded]}
       showsVerticalScrollIndicator={false}
     >
       {children}
@@ -42,8 +36,9 @@ export default function Screen({
       style={[
         styles.container,
         {
+          backgroundColor: t.background,
           paddingTop: insets.top,
-          paddingBottom: insets.bottom + 128, // 64 tab bar height + 8 gap
+          paddingBottom: insets.bottom + 128,
         },
       ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -56,12 +51,11 @@ export default function Screen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background.DEFAULT,
   },
   content: {
     flexGrow: 1,
   },
   padded: {
-    paddingHorizontal: spacing[5],
+    paddingHorizontal: space.xl,
   },
 });

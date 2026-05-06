@@ -125,10 +125,12 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
   description: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     textAlign: 'center',
   },
@@ -152,6 +154,7 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
 });

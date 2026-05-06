@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Search, X } from 'lucide-react-native';
+import { CaretLeft, MagnifyingGlass, X } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@theme/colors';
@@ -146,12 +146,12 @@ export default function SourceBrowseScreen() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
-          <ChevronLeft size={24} color={colors.text.primary} />
+          <CaretLeft size={24} color={colors.text.primary} />
         </TouchableOpacity>
 
         {searchActive ? (
           <View style={styles.searchBar}>
-            <Search size={16} color={colors.text.muted} />
+            <MagnifyingGlass size={16} color={colors.text.muted} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search manga..."
@@ -175,7 +175,7 @@ export default function SourceBrowseScreen() {
         >
           {searchActive
             ? <X size={22} color={colors.text.primary} />
-            : <Search size={22} color={colors.text.primary} />}
+            : <MagnifyingGlass size={22} color={colors.text.primary} />}
         </TouchableOpacity>
       </View>
 
@@ -315,6 +315,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.primary,
     paddingVertical: 0,
   },
@@ -392,6 +393,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     marginTop: spacing[1],
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.sizes.xs * 1.4,
   },
@@ -408,6 +410,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   errorText: {
@@ -417,6 +420,7 @@ const styles = StyleSheet.create({
   },
   errorDetail: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
     paddingHorizontal: spacing[4],

@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@theme/colors';
-import { typography } from '@theme/typography';
+import { typography, fontFamily } from '@theme/typography';
 
 interface PageLoadingIndicatorProps {
   pageNumber: number;
@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
 });

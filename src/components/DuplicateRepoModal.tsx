@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Modal, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import { AlertCircle } from 'lucide-react-native';
+import { WarningCircle } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -23,7 +23,7 @@ export function DuplicateRepoModal({ visible, onClose, repoUrl }: DuplicateRepoM
           <TouchableWithoutFeedback>
             <View style={styles.modalContent}>
               <View style={styles.iconContainer}>
-                <AlertCircle size={48} color={colors.status.error} strokeWidth={1.5} />
+                <WarningCircle size={48} color={colors.status.error} />
               </View>
 
               <View style={styles.modalBody}>
@@ -92,12 +92,14 @@ const styles = StyleSheet.create({
   },
   modalMessage: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
   },
   modalUrl: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     backgroundColor: colors.surface.DEFAULT,
     borderRadius: radius.md,

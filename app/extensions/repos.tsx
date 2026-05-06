@@ -365,6 +365,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.primary,
   },
   iconBtn: {
@@ -433,6 +434,7 @@ const styles = StyleSheet.create({
   },
   repoUrl: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   repoUrlDisabled: {
@@ -453,6 +455,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   clearButtonContainer: {
@@ -509,6 +512,7 @@ const styles = StyleSheet.create({
   },
   modalMessage: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: 22,
   },

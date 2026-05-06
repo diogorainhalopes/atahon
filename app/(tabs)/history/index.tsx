@@ -9,12 +9,13 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, Trash2 } from 'lucide-react-native';
+import { Clock, Trash } from 'phosphor-react-native';
 import PageHeader from '@components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import {
   useReadingHistory,
   useDeleteHistoryEntry,
@@ -99,7 +100,7 @@ function HistoryRow({
       </View>
 
       <TouchableOpacity style={styles.deleteBtn} onPress={onDelete} hitSlop={8}>
-        <Trash2 size={16} color={colors.text.muted} />
+        <Trash size={16} color={colors.text.muted} />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -195,7 +196,7 @@ export default function HistoryScreen() {
         right={
           hasHistory ? (
             <TouchableOpacity onPress={handleClearAll} hitSlop={8}>
-              <Trash2 size={20} color={colors.text.muted} />
+              <Trash size={20} color={colors.text.muted} />
             </TouchableOpacity>
           ) : undefined
         }
@@ -212,7 +213,7 @@ export default function HistoryScreen() {
         />
       ) : (
         <View style={styles.empty}>
-          <Clock size={64} color={colors.text.muted} strokeWidth={1.5} />
+          <Clock size={64} color={colors.text.muted} />
           <Text style={styles.emptyTitle}>No reading history</Text>
           <Text style={styles.emptySubtitle}>
             Chapters you've read will appear here
@@ -240,11 +241,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.DEFAULT,
   },
   sectionTitle: {
-    fontSize: typography.sizes.sm,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wide,
   },
 
   // Row
@@ -268,7 +267,7 @@ const styles = StyleSheet.create({
   },
   placeholderLetter: {
     fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
+    fontFamily: fontFamily.bold,
     color: colors.text.muted,
   },
   rowInfo: {
@@ -282,6 +281,7 @@ const styles = StyleSheet.create({
   },
   chapterLabel: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
   deleteBtn: {
@@ -296,14 +296,14 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   emptyTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.h2,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },

@@ -47,7 +47,6 @@ module.exports = {
         sans: ['Geist-Regular'],
         display: ['Newsreader-SemiBold'],
         serif: ['Newsreader-Medium'],
-        mono: ['Geist-Mono'],
       },
       borderRadius: {
         '4xl': '2rem',

@@ -38,6 +38,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },

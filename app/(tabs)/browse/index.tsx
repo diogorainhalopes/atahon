@@ -2,10 +2,11 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { useRouter } from 'expo-router';
 import Screen from '@components/Screen';
 import PageHeader from '@components/PageHeader';
-import { Compass, ChevronRight, Puzzle, ToggleRight } from 'lucide-react-native';
+import { Compass, CaretRight, PuzzlePiece, ToggleRight } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import { useInstalledExtensions } from '@queries/extensions';
 import { useSourceStore } from '@stores/sourceStore';
 import type { InstalledExtensionInfo } from 'extension-bridge';
@@ -35,7 +36,7 @@ function SourceRow({ source, extensionName, onPress }: SourceRowProps) {
             <Text style={styles.latestText}>LATEST</Text>
           </View>
         )}
-        <ChevronRight size={18} color={colors.text.muted} />
+        <CaretRight size={18} color={colors.text.muted} />
       </View>
     </TouchableOpacity>
   );
@@ -65,7 +66,7 @@ export default function BrowseScreen() {
       <Screen padded={false}>
         <PageHeader title="Browse" />
         <View style={styles.empty}>
-          <Compass size={64} color={colors.text.muted} strokeWidth={1.5} />
+          <Compass size={64} color={colors.text.muted} />
           <Text style={styles.emptyTitle}>No sources installed</Text>
           <Text style={styles.emptySubtitle}>
             Install extensions to browse manga from hundreds of sources
@@ -75,7 +76,7 @@ export default function BrowseScreen() {
             onPress={() => router.push('/extensions')}
             activeOpacity={0.8}
           >
-            <Puzzle size={16} color={colors.text.inverse} />
+            <PuzzlePiece size={16} color={colors.text.inverse} />
             <Text style={styles.buttonText}>Get Extensions</Text>
           </TouchableOpacity>
         </View>
@@ -89,7 +90,7 @@ export default function BrowseScreen() {
       <Screen padded={false}>
         <PageHeader title="Browse" />
         <View style={styles.empty}>
-          <ToggleRight size={64} color={colors.text.muted} strokeWidth={1.5} />
+          <ToggleRight size={64} color={colors.text.muted} />
           <Text style={styles.emptyTitle}>No sources enabled</Text>
           <Text style={styles.emptySubtitle}>
             Enable sources in your installed extensions to start browsing
@@ -99,7 +100,7 @@ export default function BrowseScreen() {
             onPress={() => router.push('/extensions')}
             activeOpacity={0.8}
           >
-            <Puzzle size={16} color={colors.text.inverse} />
+            <PuzzlePiece size={16} color={colors.text.inverse} />
             <Text style={styles.buttonText}>Manage Extensions</Text>
           </TouchableOpacity>
         </View>
@@ -166,6 +167,7 @@ const styles = StyleSheet.create({
   },
   sourceMeta: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
   sourceRight: {
@@ -197,14 +199,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[8],
   },
   emptyTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.h2,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },

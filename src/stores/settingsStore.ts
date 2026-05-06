@@ -3,12 +3,14 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Theme = 'dark' | 'amoled';
+export type ThemeMode = 'light' | 'dark' | 'system';
 export type LibraryDisplayMode = 'grid' | 'list';
 export type GridSize = 'small' | 'medium' | 'large';
 
 interface SettingsState {
   // Appearance
   theme: Theme;
+  themeMode: ThemeMode;
   gridSize: GridSize;
   libraryDisplayMode: LibraryDisplayMode;
   showUnreadBadges: boolean;
@@ -26,6 +28,7 @@ interface SettingsState {
   anonymousMode: boolean;
   // Actions
   setTheme: (theme: Theme) => void;
+  setThemeMode: (mode: ThemeMode) => void;
   setGridSize: (size: GridSize) => void;
   setLibraryDisplayMode: (mode: LibraryDisplayMode) => void;
   setShowUnreadBadges: (show: boolean) => void;
@@ -43,6 +46,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       theme: 'dark',
+      themeMode: 'system',
       gridSize: 'medium',
       libraryDisplayMode: 'grid',
       showUnreadBadges: true,
@@ -56,6 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
       anonymousMode: false,
 
       setTheme: (theme) => set({ theme }),
+      setThemeMode: (themeMode) => set({ themeMode }),
       setGridSize: (gridSize) => set({ gridSize }),
       setLibraryDisplayMode: (libraryDisplayMode) => set({ libraryDisplayMode }),
       setShowUnreadBadges: (showUnreadBadges) => set({ showUnreadBadges }),

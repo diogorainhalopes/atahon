@@ -524,6 +524,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
 
@@ -602,6 +603,7 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.lineHeights.snug,
   },
@@ -633,10 +635,12 @@ const styles = StyleSheet.create({
   },
   chapterLabel: {
     fontSize: typography.sizes.base,
+    fontFamily: fontFamily.regular,
     color: colors.text.primary,
   },
   compressionLabel: {
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     marginTop: spacing[1],
   },

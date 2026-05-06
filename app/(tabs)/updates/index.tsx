@@ -8,12 +8,13 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Bell } from 'lucide-react-native';
+import { Bell } from 'phosphor-react-native';
 import PageHeader from '@components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import { useLibraryUpdates } from '@queries/manga';
 import type { UpdateEntry } from '@db/queries/manga';
 
@@ -174,7 +175,7 @@ export default function UpdatesScreen() {
         />
       ) : (
         <View style={styles.empty}>
-          <Bell size={64} color={colors.text.muted} strokeWidth={1.5} />
+          <Bell size={64} color={colors.text.muted} />
           <Text style={styles.emptyTitle}>No updates yet</Text>
           <Text style={styles.emptySubtitle}>
             New chapters from your library will appear here
@@ -202,11 +203,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.DEFAULT,
   },
   sectionTitle: {
-    fontSize: typography.sizes.sm,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wide,
   },
 
   // Row
@@ -247,6 +246,7 @@ const styles = StyleSheet.create({
   },
   chapterLabel: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
   textRead: {
@@ -267,14 +267,14 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   emptyTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.h2,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: spacing[2],
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },

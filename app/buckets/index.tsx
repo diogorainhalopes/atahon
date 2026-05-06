@@ -463,6 +463,7 @@ const styles = StyleSheet.create({
   },
   bucketCardCount: {
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     marginTop: 1,
   },
@@ -499,6 +500,7 @@ const styles = StyleSheet.create({
   mangaCardTitle: {
     marginTop: spacing[1],
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.sizes.xs * 1.4,
   },
@@ -521,6 +523,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
     paddingHorizontal: spacing[4],

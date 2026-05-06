@@ -9,12 +9,14 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BookOpen, SlidersHorizontal, Layers } from 'lucide-react-native';
+import { BookOpen, Sliders, Stack } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { useTheme } from '@theme/ThemeProvider';
+import { typeScale } from '@theme/typeScale';
 import PageHeader from '@components/PageHeader';
 import LibraryFilterSheet, { type MangaReadingStatus } from '@components/LibraryFilterSheet';
 import { useLibraryManga, useLibraryChapterCounts } from '@queries/manga';
@@ -158,6 +160,7 @@ function ListItem({
 export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const t = useTheme();
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<MangaReadingStatus>>(new Set());
   const { data: libraryManga } = useLibraryManga();
@@ -216,22 +219,22 @@ export default function LibraryScreen() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: t.background }]}>
       <PageHeader
         title="Library"
         right={
           <View style={styles.headerActions}>
             <TouchableOpacity onPress={() => router.push('/buckets')} hitSlop={8}>
-              <Layers size={24} color={colors.text.primary} />
+              <Stack size={24} color={t.inkPrimary} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setFilterSheetVisible(true)}>
               <View>
-                <SlidersHorizontal size={24} color={colors.text.primary} />
+                <Sliders size={24} color={t.inkPrimary} />
                 {activeFilters.size > 0 && (
                   <View
                     style={[
                       styles.filterBadge,
-                      { backgroundColor: colors.accent.DEFAULT },
+                      { backgroundColor: t.accent },
                     ]}
                   />
                 )}
@@ -255,7 +258,7 @@ export default function LibraryScreen() {
         ]}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <BookOpen size={64} color={colors.text.muted} strokeWidth={1.5} />
+            <BookOpen size={64} color={t.inkTertiary} />
             {libraryManga?.length === 0 ? (
               <>
                 <Text style={styles.emptyTitle}>Your library is empty</Text>
@@ -339,6 +342,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     marginTop: spacing[1],
     fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     lineHeight: typography.sizes.xs * 1.4,
   },
@@ -352,14 +356,14 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   emptyTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.h2,
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
     textAlign: 'center',
   },
@@ -407,6 +411,7 @@ const styles = StyleSheet.create({
   },
   listItemChapter: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
   },
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Settings } from 'lucide-react-native';
+import { ArrowLeft, GearSix } from 'phosphor-react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -115,7 +115,7 @@ export function ReaderOverlay({
             style={styles.settingsBtn}
             hitSlop={12}
           >
-            <Settings size={20} color={colors.text.primary} />
+            <GearSix size={20} color={colors.text.primary} />
           </Pressable>
         </LinearGradient>
 
@@ -293,6 +293,7 @@ const styles = StyleSheet.create({
   },
   mangaTitle: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.secondary,
     textAlign: 'center',
   },

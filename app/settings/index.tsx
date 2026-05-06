@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
   },
   settingHintText: {
     fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
     color: colors.text.muted,
   },
 

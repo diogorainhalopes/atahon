@@ -7,15 +7,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Puzzle, Download, Database, Settings, ChevronRight, Info } from 'lucide-react-native';
+import { PuzzlePiece, DownloadSimple, Database, GearSix, CaretRight, Info } from 'phosphor-react-native';
 import Screen from '@components/Screen';
 import PageHeader from '@components/PageHeader';
-import { colors } from '@theme/colors';
-import { typography, fontFamily } from '@theme/typography';
+import { useTheme } from '@theme/ThemeProvider';
+import { typeScale } from '@theme/typeScale';
 import { radius, spacing } from '@theme/spacing';
 import { AboutModal } from '@components/AboutModal';
-
-// ─── MenuItem ────────────────────────────────────────────────────────────
 
 interface MenuItemProps {
   icon: React.ElementType;
@@ -24,70 +22,83 @@ interface MenuItemProps {
 }
 
 function MenuItem({ icon: Icon, label, onPress }: MenuItemProps) {
+  const t = useTheme();
   return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.menuItem, { minHeight: 56 }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.menuItemLeft}>
-        <View style={styles.iconWrapper}>
-          <Icon size={20} color={colors.accent.DEFAULT} strokeWidth={2} />
+        <View style={[styles.iconWrapper, { backgroundColor: t.accentSoft }]}>
+          <Icon size={20} color={t.accent} />
         </View>
-        <Text style={styles.menuItemLabel}>{label}</Text>
+        <Text style={[typeScale.body, { color: t.inkPrimary }]}>{label}</Text>
       </View>
-      <ChevronRight size={18} color={colors.text.muted} />
+      <CaretRight size={18} color={t.inkTertiary} />
     </TouchableOpacity>
   );
 }
 
-// ─── MoreScreen ──────────────────────────────────────────────────────────
-
 export default function MoreScreen() {
   const router = useRouter();
+  const t = useTheme();
+
+  const divider = { height: 1, backgroundColor: t.border, marginLeft: spacing[16] };
+  const sectionCard = {
+    backgroundColor: t.surface,
+    borderRadius: radius.lg,
+    overflow: 'hidden' as const,
+    borderWidth: 1,
+    borderColor: t.border,
+  };
 
   return (
-    <>
-      <Screen padded={false}>
-        <PageHeader title="More" />
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Content</Text>
-            <View style={styles.sectionCard}>
-              <MenuItem icon={Puzzle} label="Extensions" onPress={() => router.push('/extensions')} />
-              <View style={styles.divider} />
-              <MenuItem
-                icon={Database}
-                label="Repositories"
-                onPress={() => router.push('/extensions/repos')}
-              />
-              <View style={styles.divider} />
-              <MenuItem
-                icon={Download}
-                label="Downloads"
-                onPress={() => router.push('/downloads')}
-              />
-            </View>
+    <Screen padded={false}>
+      <PageHeader title="More" />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={[typeScale.label, { color: t.inkTertiary, textTransform: 'uppercase' }]}>
+            Content
+          </Text>
+          <View style={sectionCard}>
+            <MenuItem icon={PuzzlePiece} label="Extensions" onPress={() => router.push('/extensions')} />
+            <View style={divider} />
+            <MenuItem
+              icon={Database}
+              label="Repositories"
+              onPress={() => router.push('/extensions/repos')}
+            />
+            <View style={divider} />
+            <MenuItem
+              icon={DownloadSimple}
+              label="Downloads"
+              onPress={() => router.push('/downloads')}
+            />
           </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>App</Text>
-            <View style={styles.sectionCard}>
-              <MenuItem
-                icon={Settings}
-                label="Settings"
-                onPress={() => router.push('/settings')}
-              />
-              <View style={styles.divider} />
-              <MenuItem
-                icon={Info}
-                label="About"
-                onPress={() => router.push('/(modals)/about')}
-              />
-            </View>
+        </View>
+        <View style={styles.section}>
+          <Text style={[typeScale.label, { color: t.inkTertiary, textTransform: 'uppercase' }]}>
+            App
+          </Text>
+          <View style={sectionCard}>
+            <MenuItem
+              icon={GearSix}
+              label="Settings"
+              onPress={() => router.push('/settings')}
+            />
+            <View style={divider} />
+            <MenuItem
+              icon={Info}
+              label="About"
+              onPress={() => router.push('/(modals)/about')}
+            />
           </View>
-        </ScrollView>
-      </Screen>
-    </>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
-
-// ─── Styles ──────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   content: {
@@ -97,26 +108,12 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing[2],
   },
-  sectionTitle: {
-    fontSize: typography.sizes.xs,
-    fontFamily: fontFamily.semibold,
-    color: colors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wider,
-  },
-  sectionCard: {
-    backgroundColor: colors.background.card,
-    borderRadius: radius.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-  },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3.5],
+    paddingVertical: spacing[3],
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -127,18 +124,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: radius.md,
-    backgroundColor: colors.accent.muted,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  menuItemLabel: {
-    fontSize: typography.sizes.base,
-    fontFamily: fontFamily.medium,
-    color: colors.text.primary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border.subtle,
-    marginLeft: spacing[16],
   },
 });
