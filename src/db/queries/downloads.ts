@@ -229,6 +229,22 @@ export async function deleteDownloadEntry(chapterId: number): Promise<void> {
 }
 
 /**
+ * Bulk variant of deleteDownloadEntry: removes multiple chapters from the
+ * download queue and resets their chapter.downloadStatus to 0.
+ */
+export async function bulkDeleteDownloadEntries(chapterIds: number[]): Promise<void> {
+  if (chapterIds.length === 0) return;
+
+  for (const chapterId of chapterIds) {
+    await db.delete(downloadQueue).where(eq(downloadQueue.chapterId, chapterId));
+    await db
+      .update(chapter)
+      .set({ downloadStatus: 0 })
+      .where(eq(chapter.id, chapterId));
+  }
+}
+
+/**
  * Get all completed (downloadStatus = 3) chapters, grouped by manga.
  */
 export async function getCompletedDownloads(): Promise<
