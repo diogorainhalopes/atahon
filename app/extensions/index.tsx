@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
-import { ChevronRight, Search } from 'lucide-react-native';
+import { CaretRight, MagnifyingGlass } from 'phosphor-react-native';
 
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import type { ExtensionInfo } from '@/types/extensions';
 import {
   useMergedExtensions,
@@ -101,7 +102,7 @@ function ExtensionRow({ item, installing, enabledCount, onInstall, onUninstall, 
       </TouchableOpacity>
 
       {item.installed && (
-        <ChevronRight size={18} color={colors.text.muted} />
+        <CaretRight size={18} color={colors.text.muted} />
       )}
     </Wrapper>
   );
@@ -163,7 +164,7 @@ export default function ExtensionsScreen() {
       <Stack.Screen options={{ title: 'Extensions' }} />
       <View style={styles.container}>
         <View style={styles.searchBar}>
-          <Search size={16} color={colors.text.muted} />
+          <MagnifyingGlass size={16} color={colors.text.muted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search extensions..."
@@ -255,11 +256,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[1.5],
   },
   sectionTitle: {
-    fontSize: typography.sizes.xs,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wider,
   },
   row: {
     flexDirection: 'row',

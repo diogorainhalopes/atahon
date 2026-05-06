@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { Image } from 'expo-image';
-import { Trash2, X, ChevronDown, ChevronRight } from 'lucide-react-native';
+import { Trash, X, CaretDown, CaretRight } from 'phosphor-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -130,7 +130,7 @@ function DownloadRow({
         {isActive ? (
           <X size={16} color={colors.text.muted} />
         ) : (
-          <Trash2 size={16} color={colors.text.muted} />
+          <Trash size={16} color={colors.text.muted} />
         )}
       </TouchableOpacity>
     </View>
@@ -275,14 +275,14 @@ function MangaSectionHeader({
         {isDeleting ? (
           <ActivityIndicator size="small" color={colors.status.error} />
         ) : (
-          <Trash2 size={18} color={colors.status.error} />
+          <Trash size={18} color={colors.status.error} />
         )}
       </TouchableOpacity>
 
       {isCollapsed ? (
-        <ChevronRight size={18} color={colors.text.muted} />
+        <CaretRight size={18} color={colors.text.muted} />
       ) : (
-        <ChevronDown size={18} color={colors.text.muted} />
+        <CaretDown size={18} color={colors.text.muted} />
       )}
     </TouchableOpacity>
   );
@@ -446,7 +446,7 @@ export default function DownloadsScreen() {
       disabled={!hasCompleted || clearCompleted.isPending}
       hitSlop={12}
     >
-      <Trash2
+      <Trash
         size={20}
         color={
           hasCompleted && !clearCompleted.isPending

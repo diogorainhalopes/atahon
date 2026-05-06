@@ -13,10 +13,11 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, Layers, X } from 'lucide-react-native';
+import { Plus, Stack as PhosphorStack, X } from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import {
   useCategories,
   useCategoryMangaCounts,
@@ -83,7 +84,7 @@ function BucketCard({
           </>
         ) : (
           <View style={styles.thumbnailFallback}>
-            <Layers size={28} color={colors.text.muted} strokeWidth={1.5} />
+            <PhosphorStack size={28} color={colors.text.muted} />
           </View>
         )}
       </View>
@@ -234,7 +235,7 @@ export default function BucketsScreen() {
         ]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Layers size={64} color={colors.text.muted} strokeWidth={1.5} />
+            <PhosphorStack size={64} color={colors.text.muted} />
             <Text style={styles.emptyTitle}>No buckets yet</Text>
             <Text style={styles.emptySubtitle}>Tap + to create your first bucket</Text>
           </View>
@@ -285,7 +286,7 @@ export default function BucketsScreen() {
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Layers size={48} color={colors.text.muted} strokeWidth={1.5} />
+                  <PhosphorStack size={48} color={colors.text.muted} />
                   <Text style={styles.emptyTitle}>No manga in this bucket</Text>
                   <Text style={styles.emptySubtitle}>Add manga from their detail page</Text>
                 </View>
@@ -513,9 +514,9 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   emptyTitle: {
-    fontSize: typography.sizes.lg,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.h2,
     color: colors.text.secondary,
+    textAlign: 'center',
     marginTop: spacing[2],
   },
   emptySubtitle: {

@@ -12,12 +12,13 @@ import {
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Trash2, Clipboard, Send, RotateCcw } from 'lucide-react-native';
+import { Trash, ClipboardText, PaperPlaneTilt, ArrowCounterClockwise } from 'phosphor-react-native';
 import * as ClipboardModule from 'expo-clipboard';
 
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import type { ExtensionRepo } from '@db/schema';
 import {
   useRepos,
@@ -71,9 +72,9 @@ function RepoRow({ repo, onDelete, disabled = false, onReEnable }: RepoRowProps)
         activeOpacity={0.7}
       >
         {disabled ? (
-          <RotateCcw size={18} color={colors.accent.DEFAULT} />
+          <ArrowCounterClockwise size={18} color={colors.accent.DEFAULT} />
         ) : (
-          <Trash2 size={18} color={colors.status.error} />
+          <Trash size={18} color={colors.status.error} />
         )}
       </TouchableOpacity>
     </View>
@@ -257,7 +258,7 @@ export default function ReposScreen() {
               style={styles.iconBtn}
               activeOpacity={0.7}
             >
-              <Clipboard size={20} color={colors.accent.DEFAULT} />
+              <ClipboardText size={20} color={colors.accent.DEFAULT} />
             </TouchableOpacity>
           </View>
 
@@ -271,7 +272,7 @@ export default function ReposScreen() {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <View style={styles.addBtnContent}>
-                <Send size={18} color="#fff" />
+                <PaperPlaneTilt size={18} color="#fff" />
                 <Text style={styles.addBtnText}>Add</Text>
               </View>
             )}
@@ -315,7 +316,7 @@ export default function ReposScreen() {
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <>
-                      <Trash2 size={18} color="#fff" />
+                      <Trash size={18} color="#fff" />
                       <Text style={styles.clearBtnText}>Clear All Disabled</Text>
                     </>
                   )}
@@ -401,11 +402,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[8],
   },
   sectionHeader: {
-    fontSize: typography.sizes.xs,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wider,
     paddingVertical: spacing[3],
   },
   sectionSeparator: {

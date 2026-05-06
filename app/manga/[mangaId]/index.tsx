@@ -25,26 +25,24 @@ import * as Network from 'expo-network';
 import { FlashList } from '@shopify/flash-list';
 import {
   ArrowLeft,
-  ArrowDownUp,
-  BookmarkPlus,
-  BookmarkCheck,
-  RefreshCw,
-  Download,
+  ArrowsDownUp,
+  BookmarkSimple,
+  ArrowsClockwise,
+  DownloadSimple,
   Clock,
-  Loader,
+  CircleNotch,
   CheckCircle,
-  AlertCircle,
+  WarningCircle,
   HardDrive,
-  Zap,
+  Lightning,
   Play,
-  Filter,
-  Circle,
-  CheckCircle2,
+  Funnel,
+  CircleIcon,
   Eye,
-  EyeOff,
+  EyeSlash,
   X,
-  Layers,
-} from 'lucide-react-native';
+  Stack as PhosphorStack,
+} from 'phosphor-react-native';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -159,12 +157,12 @@ function ChapterRow({
       return <HardDrive size={18} color={colors.status.success} />;
     } else if (status === 4) {
       // Error
-      return <AlertCircle size={18} color={colors.status.error} />;
+      return <WarningCircle size={18} color={colors.status.error} />;
     } else if (status === 2 || downloadItem?.status === 'downloading') {
       // Downloading - show progress
       return (
         <View style={styles.downloadProgressContainer}>
-          <Loader size={16} color={colors.accent.DEFAULT} />
+          <CircleNotch size={16} color={colors.accent.DEFAULT} />
           <Text style={styles.downloadProgress}>{Math.round(progress * 100)}%</Text>
         </View>
       );
@@ -173,7 +171,7 @@ function ChapterRow({
       return <Clock size={18} color={colors.text.muted} />;
     }
     // None (0)
-    return <Download size={18} color={colors.text.muted} />;
+    return <DownloadSimple size={18} color={colors.text.muted} />;
   };
 
   return (
@@ -186,9 +184,9 @@ function ChapterRow({
       <Animated.View style={indicatorStyle}>
         <View style={styles.selectionIndicator}>
           {selected ? (
-            <CheckCircle2 size={24} color={colors.accent.DEFAULT} />
+            <CheckCircle size={24} color={colors.accent.DEFAULT} />
           ) : (
-            <Circle size={24} color={colors.text.muted} />
+            <CircleIcon size={24} color={colors.text.muted} />
           )}
         </View>
       </Animated.View>
@@ -615,9 +613,9 @@ export default function MangaDetailScreen() {
               activeOpacity={0.7}
             >
               {manga.inLibrary ? (
-                <BookmarkCheck size={18} color={colors.accent.DEFAULT} />
+                <BookmarkSimple size={18} color={colors.accent.DEFAULT} weight="fill" />
               ) : (
-                <BookmarkPlus size={18} color={colors.text.secondary} />
+                <BookmarkSimple size={18} color={colors.text.secondary} />
               )}
               <Text
                 style={[
@@ -641,7 +639,7 @@ export default function MangaDetailScreen() {
               }
               activeOpacity={0.7}
             >
-              <Zap
+              <Lightning
                 size={16}
                 color={manga.smartDownloads ? colors.accent.DEFAULT : colors.text.muted}
               />
@@ -659,7 +657,7 @@ export default function MangaDetailScreen() {
               onPress={() => setBucketPickerVisible(true)}
               activeOpacity={0.7}
             >
-              <Layers size={16} color={colors.text.muted} />
+              <PhosphorStack size={16} color={colors.text.muted} />
               <Text style={styles.smartDlText}>Buckets</Text>
             </TouchableOpacity>
           </ScrollView>
@@ -679,7 +677,7 @@ export default function MangaDetailScreen() {
                   hitSlop={8}
                   disabled={bulkEnqueueDownload.isPending}
                 >
-                  <Download
+                  <DownloadSimple
                     size={18}
                     color={bulkEnqueueDownload.isPending ? colors.text.muted : colors.text.secondary}
                   />
@@ -693,8 +691,8 @@ export default function MangaDetailScreen() {
                 activeOpacity={0.7}
                 hitSlop={8}
               >
-                <RefreshCw
-                  size={isRefreshing ? 18 : 18}
+                <ArrowsClockwise
+                  size={18}
                   color={isRefreshing ? colors.text.muted : colors.text.secondary}
                 />
               </TouchableOpacity>
@@ -704,7 +702,7 @@ export default function MangaDetailScreen() {
               activeOpacity={0.7}
               hitSlop={8}
             >
-              <Filter
+              <Funnel
                 size={18}
                 color={filterMode !== 'all' ? colors.accent.DEFAULT : colors.text.secondary}
               />
@@ -714,7 +712,7 @@ export default function MangaDetailScreen() {
               activeOpacity={0.7}
               hitSlop={8}
             >
-              <ArrowDownUp size={18} color={colors.text.secondary} />
+              <ArrowsDownUp size={18} color={colors.text.secondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -830,7 +828,7 @@ export default function MangaDetailScreen() {
             }
             hitSlop={12}
           >
-            <Play size={24} color="#fff" fill="#fff" />
+            <Play size={24} color="#fff" weight="fill" />
           </Pressable>
         )}
 
@@ -855,7 +853,7 @@ export default function MangaDetailScreen() {
               onPress={handleMarkSelectedUnread}
               activeOpacity={0.7}
             >
-              <EyeOff size={18} color={colors.text.primary} />
+              <EyeSlash size={18} color={colors.text.primary} />
               <Text style={styles.selectionBtnText}>Unread</Text>
             </TouchableOpacity>
             <TouchableOpacity

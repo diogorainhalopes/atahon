@@ -14,6 +14,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 import { useInstalledExtensions, useUninstallExtension } from '@queries/extensions';
 import { useSourceStore } from '@stores/sourceStore';
 import type { SourceInfo } from '@/types/extensions';
@@ -272,10 +273,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing[6],
   },
   sectionTitle: {
-    fontSize: typography.sizes.xs,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
-    letterSpacing: typography.letterSpacing.wider,
+    textTransform: 'uppercase',
   },
   card: {
     backgroundColor: colors.background.card,

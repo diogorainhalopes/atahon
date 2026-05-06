@@ -7,11 +7,12 @@ import {
   Switch,
 } from 'react-native';
 import { Stack } from 'expo-router';
-import { Minus, Plus } from 'lucide-react-native';
+import { Minus, Plus } from 'phosphor-react-native';
 import { useSettingsStore } from '@stores/settingsStore';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
+import { typeScale } from '@theme/typeScale';
 
 // ─── SegmentChooser ──────────────────────────────────────────────────────
 
@@ -258,11 +259,9 @@ const styles = StyleSheet.create({
     gap: spacing[2],
   },
   sectionTitle: {
-    fontSize: typography.sizes.xs,
-    fontFamily: fontFamily.semibold,
+    ...typeScale.label,
     color: colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: typography.letterSpacing.wider,
   },
   sectionCard: {
     backgroundColor: colors.background.card,

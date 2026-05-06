@@ -9,7 +9,7 @@ import {
   Linking,
 } from 'react-native';
 import Constants from 'expo-constants';
-import { X } from 'lucide-react-native';
+import { X } from 'phosphor-react-native';
 import { useRouter } from 'expo-router';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
