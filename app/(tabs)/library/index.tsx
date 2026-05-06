@@ -244,39 +244,39 @@ export default function LibraryScreen() {
         }
       />
 
-      <FlatList
-        key={`${numColumns}-${libraryDisplayMode}`}
-        data={filteredManga}
-        keyExtractor={(item) => String(item.id)}
-        renderItem={renderItem}
-        numColumns={libraryDisplayMode === 'list' ? 1 : numColumns}
-        columnWrapperStyle={libraryDisplayMode === 'list' ? undefined : styles.row}
-        contentContainerStyle={[
-          styles.grid,
-          { paddingBottom: insets.bottom + 128 },
-          filteredManga.length === 0 && styles.emptyList,
-        ]}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <BookOpen size={64} color={t.inkTertiary} />
-            {libraryManga?.length === 0 ? (
-              <>
-                <Text style={styles.emptyTitle}>Your library is empty</Text>
-                <Text style={styles.emptySubtitle}>
-                  Browse extensions to find and add manga to your library
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.emptyTitle}>No manga found</Text>
-                <Text style={styles.emptySubtitle}>
-                  Try adjusting your filters
-                </Text>
-              </>
-            )}
-          </View>
-        }
-      />
+      {filteredManga.length > 0 ? (
+        <FlatList
+          key={`${numColumns}-${libraryDisplayMode}`}
+          data={filteredManga}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          numColumns={libraryDisplayMode === 'list' ? 1 : numColumns}
+          columnWrapperStyle={libraryDisplayMode === 'list' ? undefined : styles.row}
+          contentContainerStyle={[
+            styles.grid,
+            { paddingBottom: insets.bottom + 128 },
+          ]}
+        />
+      ) : (
+        <View style={styles.empty}>
+          <BookOpen size={64} color={t.inkTertiary} />
+          {libraryManga?.length === 0 ? (
+            <>
+              <Text style={styles.emptyTitle}>Your library is empty</Text>
+              <Text style={styles.emptySubtitle}>
+                Browse extensions to find and add manga to your library
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.emptyTitle}>No manga found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try adjusting your filters
+              </Text>
+            </>
+          )}
+        </View>
+      )}
 
       <LibraryFilterSheet
         visible={filterSheetVisible}
