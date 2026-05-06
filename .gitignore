@@ -55,6 +55,10 @@ docs/dist/
 docs/node_modules/
 docs/.astro/
 
+# Superpowers brainstorming/planning artefacts (local-only)
+.superpowers/
+docs/superpowers/
+
 CLAUDE.md
 TODO.mdx
 *.keystore
