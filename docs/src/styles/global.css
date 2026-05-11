@@ -1,32 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #0A0A0F;
-  --color-background-secondary: #111118;
-  --color-background-elevated: #1A1A24;
-  --color-background-card: #16161F;
+  --color-background: #080808;
+  --color-background-secondary: #080808;
+  --color-background-elevated: #161616;
+  --color-background-card: #0E0E0E;
 
-  --color-surface: #1E1E2E;
-  --color-surface-hover: #252535;
+  --color-surface: #0E0E0E;
+  --color-surface-hover: #161616;
 
-  --color-border: #2A2A3D;
-  --color-border-subtle: #1E1E2E;
+  --color-border: #333333;
+  --color-border-subtle: #1E1E1E;
+  --color-border-strong: #444444;
 
   --color-accent: #7C6EF8;
-  --color-accent-hover: #6B5DE8;
-  --color-accent-muted: rgba(124, 110, 248, 0.125);
+  --color-accent-hover: #6B5FE0;
+  --color-accent-muted: rgba(124, 110, 248, 0.08);
 
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A0A0B8;
-  --color-text-muted: #606078;
-  --color-text-inverse: #0A0A0F;
+  --color-text-secondary: #BBBBBB;
+  --color-text-muted: #666666;
+  --color-text-inverse: #080808;
 
-  --color-status-success: #4CAF7D;
-  --color-status-warning: #F5A623;
-  --color-status-error: #E85D5D;
-  --color-status-info: #5B9CF6;
+  --color-status-success: #44CC88;
+  --color-status-warning: #FFAA33;
+  --color-status-error: #FF4444;
+  --color-status-info: #4488FF;
 
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-sans: 'Exo 2', system-ui, sans-serif;
   --font-mono: 'Geist Mono', monospace;
 
   --animate-fade-in: fade-in 0.6s ease-out forwards;

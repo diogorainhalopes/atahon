@@ -15,10 +15,10 @@ Extensions are **Tachiyomi/Mihon-compatible APK files** that Atahon loads at run
 - Provides one or more **sources** (e.g., a single extension might include sources for multiple languages)
 - Is identified by a **package name** (e.g., `eu.kanade.tachiyomi.extension.en.weebcentral`)
 - Has a **version**, **language**, and optional **NSFW** flag
-- Runs in an isolated classloader inside the app
+- Is loaded into the host app's process via a dedicated child-first classloader
 
-<Callout type="info">
-  Extensions don't have access to your library, history, or personal data. They only respond to specific API calls like "search for manga" or "get chapter pages."
+<Callout type="warning">
+  Extensions are **not sandboxed**. They run inside Atahon's own process with the same Android permissions and filesystem access as the app — they can make any network request the app can make. In practice well-behaved extensions only respond to source API calls (search, fetch chapter, fetch pages), but nothing technically prevents them from doing more. Only install extensions from repositories you trust.
 </Callout>
 
 ## Installing Extensions

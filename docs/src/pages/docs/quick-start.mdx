@@ -1,0 +1,67 @@
+---
+layout: ../../layouts/DocsLayout.astro
+title: Quick Start
+description: Get reading in 5 minutes — install Atahon, add a repository, enable an extension, and add your first manga to the library.
+---
+
+import Callout from '../../components/Callout.astro';
+
+Get from a fresh install to reading your first chapter in about 5 minutes.
+
+## 1. Install Atahon
+
+Download the latest APK from [GitHub Releases](https://github.com/diogorainhalopes/atahon/releases) and install it on your Android device. You'll need to allow installs from unknown sources the first time.
+
+<Callout type="info">
+  Atahon requires Android 8.0 (API 26) or later. It is distributed as a direct APK — not through Google Play.
+</Callout>
+
+## 2. Add the Keiyoushi repository
+
+Repositories are how Atahon discovers extensions. We'll start with **Keiyoushi**, the largest community-maintained repo for Tachiyomi/Mihon extensions.
+
+1. Open Atahon and tap **More** in the bottom tab bar.
+2. Tap **Extensions**, then the **Repositories** icon at the top.
+3. Tap **Add Repository** and paste this URL:
+
+   ```
+   https://raw.githubusercontent.com/keiyoushi/extensions/repo
+   ```
+
+4. Confirm. Atahon fetches the index automatically.
+
+<Callout type="tip">
+  You can add more repositories later. See [Adding Repositories](/atahon/docs/repositories/) for the URL format and details.
+</Callout>
+
+## 3. Install an extension
+
+1. Go back to the **Extensions** screen — available extensions now appear in the list.
+2. Find one for the source you want to read from. For example: **WeebCentral**.
+3. Tap it, then tap **Install**. The extension APK downloads and installs locally.
+
+That's it — the source is now live inside Atahon. No system-level install prompt: the extension is loaded into the app's own process via a dedicated classloader, so it doesn't show up as a separate Android app.
+
+<Callout type="warning">
+  Extensions are not sandboxed. They run in Atahon's process with the same permissions as the app — they can make any network request and read the app's own files. Only install extensions from repositories you trust.
+</Callout>
+
+## 4. Browse and add to your library
+
+1. Switch to the **Browse** tab. Your newly installed source is listed.
+2. Tap the source to see **Popular**, **Latest**, and **Search**.
+3. Tap any manga card to open its detail page.
+4. Tap **Add to Library** to save it to your collection.
+
+## 5. Read
+
+1. Open the **Library** tab — your manga is there.
+2. Tap it, pick a chapter, and start reading.
+3. Long-press anywhere on the page to bring up the reader overlay and settings.
+
+## Next steps
+
+- [Add more repositories](/atahon/docs/repositories/) — bring in other community sources.
+- [Smart Downloads](/atahon/docs/smart-downloads/) — auto-download new chapters for manga you follow.
+- [Chapter Compression](/atahon/docs/compression/) — save storage by converting downloads to WebP.
+- [How It Works](/atahon/docs/how-it-works/) — what's happening under the hood.

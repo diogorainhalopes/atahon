@@ -1,4 +1,5 @@
 ---
+import Hero3DPhone from './Hero3DPhone.tsx';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
@@ -6,37 +7,36 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <!-- Background gradient orb -->
   <div
     class="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulse-glow"
-    style="background: radial-gradient(ellipse at center, rgba(124, 110, 248, 0.2) 0%, rgba(124, 110, 248, 0.05) 40%, transparent 70%);"
-  >
-  </div>
-
-  <!-- Secondary subtle orb -->
-  <div
-    class="pointer-events-none absolute top-1/3 right-1/4 h-[300px] w-[300px] rounded-full opacity-30 blur-3xl"
-    style="background: radial-gradient(circle, rgba(124, 110, 248, 0.15) 0%, transparent 70%);"
+    style="background: radial-gradient(ellipse at center, rgba(124, 110, 248, 0.12) 0%, rgba(124, 110, 248, 0.03) 40%, transparent 70%);"
   >
   </div>
 
   <div class="relative z-10 mx-auto max-w-3xl text-center">
-    <!-- App icon -->
-    <div class="mb-8 flex justify-center">
-      <div class="animate-float rounded-3xl bg-background-card p-1 shadow-2xl shadow-accent/10 ring-1 ring-border">
-        <img
-          src={`${base}/icon.png`}
-          alt="Atahon icon"
-          class="h-24 w-24 rounded-2xl"
-          width="96"
-          height="96"
-        />
+    <!-- 3D phone (hydrates client:visible; SSR fallback below paints first) -->
+    <div class="mb-10 flex justify-center">
+      <div class="relative h-[440px] w-[260px] sm:h-[340px] sm:w-[200px] lg:h-[280px] lg:w-[170px]">
+        <div
+          data-hero-fallback
+          class="absolute inset-0 flex animate-float items-center justify-center"
+        >
+          <div class="rounded-3xl bg-background-card p-1 shadow-2xl shadow-accent/10 ring-1 ring-border">
+            <img
+              src={`${base}/icon.png`}
+              alt="Atahon icon"
+              class="h-32 w-32 rounded-2xl sm:h-40 sm:w-40"
+              width="160"
+              height="160"
+            />
+          </div>
+        </div>
+        <Hero3DPhone base={base} client:visible />
       </div>
     </div>
 
     <!-- Headline -->
     <h1 class="text-5xl font-extrabold tracking-tight text-text-primary sm:text-6xl lg:text-7xl">
       A Modern<br />
-      <span class="bg-gradient-to-r from-accent to-[#A78BFA] bg-clip-text text-transparent">
-        Manga Reader
-      </span>
+      <span class="text-text-primary">Manga Reader</span>
     </h1>
 
     <!-- Tagline -->
@@ -59,13 +59,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         Download APK
       </a>
       <a
-        href={`${base}/docs/`}
+        href={`${base}/docs/quick-start/`}
         class="inline-flex items-center gap-2 rounded-xl border border-border px-8 py-3.5 text-base font-semibold text-text-primary transition-all hover:border-accent/40 hover:bg-accent-muted hover:-translate-y-0.5"
       >
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
         </svg>
-        Documentation
+        Quick Start
       </a>
     </div>
   </div>
