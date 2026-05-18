@@ -3,7 +3,7 @@ import Hero3DPhone from './Hero3DPhone.tsx';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
-<section class="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
+<section class="relative flex min-h-screen items-center justify-center overflow-hidden px-6 pt-24 pb-12 sm:pt-20">
   <!-- Background gradient orb -->
   <div
     class="pointer-events-none absolute top-1/2 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full animate-pulse-glow"
@@ -14,7 +14,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <div class="relative z-10 mx-auto max-w-3xl text-center">
     <!-- 3D phone (hydrates client:visible; SSR fallback below paints first) -->
     <div class="mb-10 flex justify-center">
-      <div class="relative h-[440px] w-[260px] sm:h-[340px] sm:w-[200px] lg:h-[280px] lg:w-[170px]">
+      <div class="relative h-[420px] w-[260px] sm:h-[500px] sm:w-[310px] lg:h-[560px] lg:w-[340px]">
         <div
           data-hero-fallback
           class="absolute inset-0 flex animate-float items-center justify-center"

@@ -137,154 +137,36 @@ function Phone({ base }: { base: string }) {
   );
 }
 
-function ZoomController() {
-  const { camera, gl } = useThree();
-  useEffect(() => {
-    const el = gl.domElement;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      camera.position.z = THREE.MathUtils.clamp(
-        camera.position.z + e.deltaY * 0.005,
-        2.4,
-        5.0,
-      );
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, [camera, gl]);
-  return null;
-}
-
-function PhoneCanvas({
-  base,
-  mode,
-}: {
-  base: string;
-  mode: 'hero' | 'focus';
-}) {
-  const isFocus = mode === 'focus';
-  return (
-    <Canvas
-      dpr={[1, 2]}
-      camera={{ position: [0, 0, isFocus ? 5.0 : 3.8], fov: 32 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ background: 'transparent' }}
-    >
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[3, 4, 5]} intensity={1.1} />
-      <directionalLight position={[-2, -1, 2]} intensity={0.25} />
-      {isFocus && <ZoomController />}
-      <Suspense fallback={null}>
-        <PresentationControls
-          global={false}
-          cursor
-          snap={false}
-          speed={1}
-          rotation={[0.18, 0, 0]}
-          polar={isFocus ? [-Math.PI / 2.2, Math.PI / 2.2] : [-0.35, 0.35]}
-          azimuth={
-            isFocus
-              ? [-Infinity, Infinity]
-              : [-Math.PI / 2.2, Math.PI / 2.2]
-          }
-          config={{ mass: 1, tension: 170, friction: 26 }}
-        >
-          {isFocus ? (
-            <Phone base={base} />
-          ) : (
-            <AutoSpinGroup>
-              <Phone base={base} />
-            </AutoSpinGroup>
-          )}
-        </PresentationControls>
-      </Suspense>
-    </Canvas>
-  );
-}
-
 export default function Hero3DPhone({ base = '' }: { base?: string }) {
-  const [focused, setFocused] = useState(false);
-  const downRef = useRef<{ x: number; y: number; t: number } | null>(null);
-
   useEffect(() => {
     document.querySelector('[data-hero-fallback]')?.remove();
   }, []);
 
-  useEffect(() => {
-    if (!focused) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFocused(false);
-    };
-    window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [focused]);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    downRef.current = { x: e.clientX, y: e.clientY, t: performance.now() };
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    const d = downRef.current;
-    downRef.current = null;
-    if (!d) return;
-    const moved = Math.hypot(e.clientX - d.x, e.clientY - d.y);
-    if (moved < 6 && performance.now() - d.t < 300) setFocused(true);
-  };
-
   return (
-    <>
-      <div
-        className="absolute inset-0 cursor-zoom-in"
-        style={{ touchAction: 'none' }}
-        onPointerDownCapture={onPointerDown}
-        onPointerUpCapture={onPointerUp}
-      >
-        <PhoneCanvas base={base} mode="hero" />
-      </div>
-
-      {focused && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setFocused(false);
-          }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Atahon screenshots — interactive phone preview"
+    <Canvas
+      dpr={[1, 2]}
+      camera={{ position: [0, 0, 3.7], fov: 32 }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ background: 'transparent', touchAction: 'pan-y' }}
+    >
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[3, 4, 5]} intensity={1.1} />
+      <directionalLight position={[-2, -1, 2]} intensity={0.25} />
+      <Suspense fallback={null}>
+        <PresentationControls
+          global={true}
+          cursor
+          snap={false}
+          speed={1}
+          rotation={[0.18, 0, 0]}
+          polar={[-0.35, 0.35]}
+          azimuth={[-Math.PI / 2.2, Math.PI / 2.2]}
         >
-          <button
-            onClick={() => setFocused(false)}
-            aria-label="Close preview"
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-3 text-white backdrop-blur transition hover:bg-white/20"
-          >
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 6l12 12M18 6L6 18"
-              />
-            </svg>
-          </button>
-
-          <div className="relative h-[90vh] w-[min(90vw,520px)]">
-            <PhoneCanvas base={base} mode="focus" />
-          </div>
-
-          <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-xs text-white/60">
-            Drag to rotate · scroll to zoom · Esc to close
-          </p>
-        </div>
-      )}
-    </>
+          <AutoSpinGroup>
+            <Phone base={base} />
+          </AutoSpinGroup>
+        </PresentationControls>
+      </Suspense>
+    </Canvas>
   );
 }
