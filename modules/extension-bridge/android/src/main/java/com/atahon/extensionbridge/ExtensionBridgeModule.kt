@@ -184,6 +184,19 @@ class ExtensionBridgeModule : Module() {
             Logger.d("ExtensionBridge", "callSource($method, src=$id) → ${result.length} chars")
             result
         }
+
+        // ── Download foreground service ───────────────────────────────────────────
+        AsyncFunction("startDownloadService") { total: Int ->
+            DownloadForegroundService.start(context, total)
+        }
+
+        AsyncFunction("updateDownloadNotification") { completed: Int, total: Int, chapterName: String ->
+            DownloadForegroundService.update(context, completed, total, chapterName)
+        }
+
+        AsyncFunction("stopDownloadService") {
+            DownloadForegroundService.stop(context)
+        }
     }
 
     // ── Serialization helpers ────────────────────────────────────────────────────

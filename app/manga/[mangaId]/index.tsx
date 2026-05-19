@@ -66,6 +66,10 @@ import {
 import { useMergedExtensions, useRepos } from '@queries/extensions';
 import { useDownloadStore } from '@stores/downloadStore';
 import { useSettingsStore } from '@stores/settingsStore';
+import {
+  needsNotificationPermission,
+  requestNotificationPermission,
+} from '@utils/notificationPermission';
 import { BucketPickerModal } from '@components/BucketPickerModal';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -318,6 +322,10 @@ export default function MangaDetailScreen() {
   const [wifiModalVisible, setWifiModalVisible] = useState(false);
   const pendingAction = useRef<(() => void) | null>(null);
 
+  // Notification permission modal state
+  const [notifModalVisible, setNotifModalVisible] = useState(false);
+  const pendingNotifAction = useRef<(() => void) | null>(null);
+
   // Bucket picker modal state
   const [bucketPickerVisible, setBucketPickerVisible] = useState(false);
 
@@ -366,6 +374,20 @@ export default function MangaDetailScreen() {
     fetchChapters.mutate(params);
   }, [manga, isRefreshing]);
 
+  // Notification permission guard — shows rationale modal on Android 13+ if not granted
+  const withNotificationGuard = useCallback(
+    async (action: () => void) => {
+      const needed = await needsNotificationPermission();
+      if (!needed) {
+        action();
+        return;
+      }
+      pendingNotifAction.current = action;
+      setNotifModalVisible(true);
+    },
+    [],
+  );
+
   // Wi-Fi guard for downloads
   const withWifiGuard = useCallback(
     async (action: () => void) => {
@@ -390,7 +412,7 @@ export default function MangaDetailScreen() {
   const handleDownloadChapter = useCallback(
     (chapter: Chapter) => {
       if (!manga) return;
-      withWifiGuard(() => {
+      withNotificationGuard(() => withWifiGuard(() => {
         enqueueDownload.mutate({
           chapterId: chapter.id,
           mangaId: manga.id,
@@ -399,9 +421,9 @@ export default function MangaDetailScreen() {
           sourceId: manga.sourceId,
           chapterUrl: chapter.sourceUrl,
         });
-      });
+      }));
     },
-    [manga, enqueueDownload, withWifiGuard],
+    [manga, enqueueDownload, withWifiGuard, withNotificationGuard],
   );
 
   const handleDownloadAll = useCallback(() => {
@@ -417,11 +439,11 @@ export default function MangaDetailScreen() {
         chapterUrl: ch.sourceUrl,
       }));
     if (toDownload.length > 0) {
-      withWifiGuard(() => {
+      withNotificationGuard(() => withWifiGuard(() => {
         bulkEnqueueDownload.mutate(toDownload);
-      });
+      }));
     }
-  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
+  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard, withNotificationGuard]);
 
   const handleCancelAll = useCallback(() => {
     if (!manga) return;
@@ -441,11 +463,11 @@ export default function MangaDetailScreen() {
         chapterUrl: ch.sourceUrl,
       }));
     if (toDownload.length > 0) {
-      withWifiGuard(() => {
+      withNotificationGuard(() => withWifiGuard(() => {
         bulkEnqueueDownload.mutate(toDownload);
-      });
+      }));
     }
-  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard]);
+  }, [manga, chapters, bulkEnqueueDownload, withWifiGuard, withNotificationGuard]);
 
   // Selection handlers
   const handleLongPressChapter = useCallback((chapterId: number) => {
@@ -944,6 +966,58 @@ export default function MangaDetailScreen() {
                     }}
                   >
                     <Text style={styles.wifiConfirmText}>Disable & Download</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* Notification Permission Modal */}
+      <Modal
+        visible={notifModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNotifModalVisible(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => {
+          pendingNotifAction.current?.();
+          pendingNotifAction.current = null;
+          setNotifModalVisible(false);
+        }}>
+          <View style={styles.wifiBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.wifiModal}>
+                <View style={styles.wifiHeader}>
+                  <Text style={styles.wifiTitle}>Enable notifications</Text>
+                </View>
+                <View style={styles.wifiBody}>
+                  <Text style={styles.wifiMessage}>
+                    Downloads will run in the background regardless. Notifications let you know when they finish.
+                  </Text>
+                </View>
+                <View style={styles.wifiActions}>
+                  <TouchableOpacity
+                    style={styles.wifiCancelBtn}
+                    onPress={() => {
+                      pendingNotifAction.current?.();
+                      pendingNotifAction.current = null;
+                      setNotifModalVisible(false);
+                    }}
+                  >
+                    <Text style={styles.wifiCancelText}>Skip</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.wifiConfirmBtn}
+                    onPress={async () => {
+                      setNotifModalVisible(false);
+                      await requestNotificationPermission();
+                      pendingNotifAction.current?.();
+                      pendingNotifAction.current = null;
+                    }}
+                  >
+                    <Text style={styles.wifiConfirmText}>Enable</Text>
                   </TouchableOpacity>
                 </View>
               </View>

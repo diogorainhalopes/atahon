@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   label: {
-    fontSize: 12,
+    fontSize: 9,
     fontFamily: fontFamily.semibold,
     fontWeight: '600',
     lineHeight: 16,

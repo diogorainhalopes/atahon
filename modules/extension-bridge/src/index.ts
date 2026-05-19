@@ -34,6 +34,9 @@ export interface ExtensionBridgeNativeModule {
   installExtension(apkUrl: string, pkgName: string): Promise<InstalledExtensionInfo>;
   uninstallExtension(pkgName: string): Promise<void>;
   callSource(sourceId: string, method: string, params: Record<string, unknown>): Promise<string>;
+  startDownloadService(totalCount: number): Promise<void>;
+  updateDownloadNotification(completed: number, total: number, chapterName: string): Promise<void>;
+  stopDownloadService(): Promise<void>;
 }
 
 // High-level typed wrapper
@@ -111,6 +114,30 @@ class ExtensionBridgeAPI {
     maxWidth?: number,
   ): Promise<void> {
     await this.call(sourceId, 'downloadPage', { imageUrl, destPath, quality, maxWidth });
+  }
+
+  async startDownloadService(totalCount: number): Promise<void> {
+    try {
+      await this.native().startDownloadService(totalCount);
+    } catch (e) {
+      console.warn('[ExtensionBridge] startDownloadService failed:', e);
+    }
+  }
+
+  async updateDownloadNotification(completed: number, total: number, chapterName: string): Promise<void> {
+    try {
+      await this.native().updateDownloadNotification(completed, total, chapterName);
+    } catch (e) {
+      console.warn('[ExtensionBridge] updateDownloadNotification failed:', e);
+    }
+  }
+
+  async stopDownloadService(): Promise<void> {
+    try {
+      await this.native().stopDownloadService();
+    } catch (e) {
+      console.warn('[ExtensionBridge] stopDownloadService failed:', e);
+    }
   }
 }
 

@@ -16,7 +16,15 @@ class DownloadForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val total = intent?.getIntExtra("total", 0) ?: 0
         ensureChannel(this)
-        startForeground(NOTIFICATION_ID, buildNotification(this, 0, total, "Starting…"))
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            startForeground(
+                NOTIFICATION_ID,
+                buildNotification(this, 0, total, "Starting…"),
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification(this, 0, total, "Starting…"))
+        }
         return START_NOT_STICKY
     }
 
@@ -37,6 +45,7 @@ class DownloadForegroundService : Service() {
         }
 
         fun stop(context: Context) {
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
             context.stopService(Intent(context, DownloadForegroundService::class.java))
         }
 

@@ -28,14 +28,19 @@ function throwIfCancelled(chapterId: number): void {
 
 let isWorkerRunning = false;
 let activeJobsCount = 0;
+let workerTotalCount = 0;
+let workerCompletedCount = 0;
 
 export function startWorker(): void {
   const store = useDownloadStore.getState();
   if (!isWorkerRunning) {
     isWorkerRunning = true;
+    workerTotalCount = store.queue.length;
+    workerCompletedCount = 0;
     store.setRunning(true);
     Logger.info(MODULE, '🚀 Worker STARTED');
     Logger.info(MODULE, `Queue has ${store.queue.length} items`);
+    ExtensionBridge.startDownloadService(workerTotalCount);
     pump();
   } else {
     Logger.debug(MODULE, '⚠️ Worker already running');
@@ -84,6 +89,7 @@ function pump(): void {
         isWorkerRunning = false;
         store.setRunning(false);
         Logger.info(MODULE, '✋ Worker stopped (queue empty, no active jobs)');
+        ExtensionBridge.stopDownloadService();
       }
       return;
     }
@@ -261,5 +267,12 @@ async function downloadChapter(item: ReturnType<typeof useDownloadStore.getState
     queryClient.invalidateQueries({ queryKey: mangaKeys.chapters(item.mangaId) });
 
     useDownloadStore.getState().updateStatus(chapterId, 'error', errorMessage);
+  } finally {
+    workerCompletedCount++;
+    ExtensionBridge.updateDownloadNotification(
+      workerCompletedCount,
+      workerTotalCount,
+      item.chapterName,
+    );
   }
 }
