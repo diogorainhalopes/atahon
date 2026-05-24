@@ -1,6 +1,6 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import ExtensionBridge from 'extension-bridge';
-import type { MangasPage } from '@/types/extensions';
+import type { FilterList, MangasPage } from '@/types/extensions';
 import { db } from '@db/client';
 import { manga } from '@db/schema';
 import { and, eq } from 'drizzle-orm';
@@ -13,6 +13,7 @@ export const sourceKeys = {
   latest: (sourceId: string) => [...sourceKeys.all, sourceId, 'latest'] as const,
   search: (sourceId: string, query: string) =>
     [...sourceKeys.all, sourceId, 'search', query] as const,
+  filters: (sourceId: string) => [...sourceKeys.all, sourceId, 'filters'] as const,
 };
 
 // ─── Manga list hooks (infinite queries) ─────────────────────────────────────
@@ -41,16 +42,30 @@ export function useLatestUpdates(sourceId: string) {
   });
 }
 
-export function useSearchManga(sourceId: string, query: string, enabled: boolean) {
+export function useSearchManga(
+  sourceId: string,
+  query: string,
+  enabled: boolean,
+  activeFilters: FilterList = { filters: [] },
+) {
   return useInfiniteQuery<MangasPage>({
-    queryKey: sourceKeys.search(sourceId, query),
+    queryKey: [...sourceKeys.search(sourceId, query), activeFilters],
     queryFn: ({ pageParam }) =>
-      ExtensionBridge.searchManga(sourceId, pageParam as number, query, { filters: [] }),
+      ExtensionBridge.searchManga(sourceId, pageParam as number, query, activeFilters),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasNextPage ? allPages.length + 1 : undefined,
     staleTime: 5 * 60_000,
     enabled: enabled && query.length > 0,
+  });
+}
+
+export function useSourceFilters(sourceId: string) {
+  return useQuery<FilterList>({
+    queryKey: sourceKeys.filters(sourceId),
+    queryFn: () => ExtensionBridge.getFilters(sourceId),
+    staleTime: Infinity,
+    enabled: !!sourceId,
   });
 }
 

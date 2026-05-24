@@ -92,6 +92,12 @@ class ExtensionBridgeAPI {
     return this.call(sourceId, 'searchManga', { page, query, filters });
   }
 
+  async getFilters(sourceId: string): Promise<FilterList> {
+    const json = await this.native().callSource(sourceId, 'getFilters', {});
+    const filters = JSON.parse(json);
+    return { filters };
+  }
+
   async getMangaDetails(sourceId: string, mangaUrl: string): Promise<SManga> {
     return this.call(sourceId, 'getMangaDetails', { mangaUrl })
   }

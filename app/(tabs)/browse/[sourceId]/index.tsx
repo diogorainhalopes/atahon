@@ -12,20 +12,23 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CaretLeft, MagnifyingGlass, X } from 'phosphor-react-native';
+import { Sliders } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
-import type { SManga } from '@/types/extensions';
+import type { Filter, FilterList, SManga } from '@/types/extensions';
 import { Logger } from '@utils/logger';
 import {
   usePopularManga,
   useLatestUpdates,
   useSearchManga,
+  useSourceFilters,
   useUpsertBrowseManga,
 } from '@queries/sources';
 import { useLibrarySourceUrls } from '@queries/manga';
+import FilterSheet from '@components/FilterSheet';
 
 const NUM_COLUMNS = 3;
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -82,12 +85,19 @@ export default function SourceBrowseScreen() {
   const [tab, setTab] = useState<Tab>('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Filter[]>([]);
 
   const { data: libraryUrls } = useLibrarySourceUrls(sourceId);
+  const { data: sourceFiltersData } = useSourceFilters(sourceId);
   const upsert = useUpsertBrowseManga();
   const popularQuery = usePopularManga(sourceId);
   const latestQuery = useLatestUpdates(sourceId);
-  const searchResult = useSearchManga(sourceId, searchQuery, tab === 'search');
+  const activeFilterList: FilterList = useMemo(
+    () => ({ filters: activeFilters }),
+    [activeFilters],
+  );
+  const searchResult = useSearchManga(sourceId, searchQuery, tab === 'search', activeFilterList);
 
   const activeQuery =
     tab === 'search' ? searchResult : tab === 'latest' ? latestQuery : popularQuery;
@@ -177,6 +187,19 @@ export default function SourceBrowseScreen() {
             ? <X size={22} color={colors.text.primary} />
             : <MagnifyingGlass size={22} color={colors.text.primary} />}
         </TouchableOpacity>
+
+        {!searchActive && (
+          <TouchableOpacity
+            onPress={() => setFilterSheetVisible(true)}
+            style={[styles.searchBtn, activeFilters.length > 0 && styles.filterBtnActive]}
+            activeOpacity={0.7}
+          >
+            <Sliders
+              size={22}
+              color={activeFilters.length > 0 ? colors.accent.DEFAULT : colors.text.primary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* ── Tab switcher ─────────────────────────────────────────────── */}
@@ -271,6 +294,16 @@ export default function SourceBrowseScreen() {
           }
         />
       )}
+      {/* ── Filter Sheet ──────────────────────────────────────────────── */}
+      <FilterSheet
+        visible={filterSheetVisible}
+        onClose={() => setFilterSheetVisible(false)}
+        filters={sourceFiltersData?.filters ?? []}
+        onApply={(applied) => {
+          setActiveFilters(applied);
+          setFilterSheetVisible(false);
+        }}
+      />
     </View>
   );
 }
@@ -321,6 +354,10 @@ const styles = StyleSheet.create({
   },
   searchBtn: {
     padding: spacing[2],
+  },
+  filterBtnActive: {
+    backgroundColor: colors.accent.muted,
+    borderRadius: radius.md,
   },
   tabs: {
     flexDirection: 'row',

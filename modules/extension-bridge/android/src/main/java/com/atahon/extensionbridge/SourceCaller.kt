@@ -79,6 +79,83 @@ object SourceCaller {
                         val imageUrl = httpSource.getImageUrl(page)
                         JSONObject().put("imageUrl", imageUrl).toString()
                     }
+                    "getFilters" -> {
+                        val filterList = (src as CatalogueSource).getFilterList()
+                        val filtersJson = JSONArray()
+                        for (filter in filterList.list) {
+                            val obj = JSONObject()
+                            obj.put("name", filter.name)
+                            when (filter) {
+                                is eu.kanade.tachiyomi.source.model.Filter.Header -> {
+                                    obj.put("type", "header")
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.Separator -> {
+                                    obj.put("type", "separator")
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.Text -> {
+                                    obj.put("type", "text")
+                                    obj.put("state", filter.state)
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.CheckBox -> {
+                                    obj.put("type", "checkbox")
+                                    obj.put("state", filter.state)
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.TriState -> {
+                                    obj.put("type", "tristate")
+                                    obj.put("state", filter.state)
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.Select<*> -> {
+                                    obj.put("type", "select")
+                                    obj.put("state", filter.state)
+                                    val valuesArr = JSONArray()
+                                    for (v in filter.values) valuesArr.put(v.toString())
+                                    obj.put("values", valuesArr)
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.Group<*> -> {
+                                    obj.put("type", "group")
+                                    val childArr = JSONArray()
+                                    for (child in filter.state) {
+                                        if (child is eu.kanade.tachiyomi.source.model.Filter<*>) {
+                                            val childObj = JSONObject()
+                                            childObj.put("name", child.name)
+                                            when (child) {
+                                                is eu.kanade.tachiyomi.source.model.Filter.CheckBox -> {
+                                                    childObj.put("type", "checkbox")
+                                                    childObj.put("state", child.state)
+                                                }
+                                                is eu.kanade.tachiyomi.source.model.Filter.TriState -> {
+                                                    childObj.put("type", "tristate")
+                                                    childObj.put("state", child.state)
+                                                }
+                                                is eu.kanade.tachiyomi.source.model.Filter.Text -> {
+                                                    childObj.put("type", "text")
+                                                    childObj.put("state", child.state)
+                                                }
+                                                else -> childObj.put("type", "unknown")
+                                            }
+                                            childArr.put(childObj)
+                                        }
+                                    }
+                                    obj.put("state", childArr)
+                                }
+                                is eu.kanade.tachiyomi.source.model.Filter.Sort -> {
+                                    obj.put("type", "sort")
+                                    val valuesArr = JSONArray()
+                                    for (v in filter.values) valuesArr.put(v)
+                                    obj.put("values", valuesArr)
+                                    filter.state?.let { s ->
+                                        val stateObj = JSONObject()
+                                        stateObj.put("index", s.index)
+                                        stateObj.put("ascending", s.ascending)
+                                        obj.put("state", stateObj)
+                                    }
+                                }
+                                else -> obj.put("type", "unknown")
+                            }
+                            filtersJson.put(obj)
+                        }
+                        filtersJson.toString()
+                    }
                     "downloadPage" -> {
                         val imageUrl = params["imageUrl"] as? String
                             ?: throw IllegalArgumentException("imageUrl required")
