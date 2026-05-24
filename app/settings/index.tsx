@@ -5,14 +5,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   Switch,
+  Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { Minus, Plus } from 'phosphor-react-native';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import { useSettingsStore } from '@stores/settingsStore';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { typeScale } from '@theme/typeScale';
+import { exportBackup, importBackup } from '@utils/backup';
 
 // ─── SegmentChooser ──────────────────────────────────────────────────────
 
@@ -109,6 +113,22 @@ function SettingRow({ label, children }: SettingRowProps) {
   );
 }
 
+// ─── ActionRow ────────────────────────────────────────────────────────────
+
+interface ActionRowProps {
+  label: string;
+  onPress: () => void;
+  destructive?: boolean;
+}
+
+function ActionRow({ label, onPress, destructive }: ActionRowProps) {
+  return (
+    <TouchableOpacity style={styles.settingRow} onPress={onPress} activeOpacity={0.7}>
+      <Text style={[styles.settingLabel, destructive && styles.destructiveLabel]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 // ─── SettingsScreen ──────────────────────────────────────────────────────
 
 export default function SettingsScreen() {
@@ -130,6 +150,38 @@ export default function SettingsScreen() {
     anonymousMode,
     setAnonymousMode,
   } = useSettingsStore();
+
+  async function handleExportBackup() {
+    try {
+      const uri = await exportBackup();
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/json',
+          dialogTitle: 'Share Atahon backup',
+        });
+      } else {
+        Alert.alert('Backup exported', `Saved to:\n${uri}`);
+      }
+    } catch (e) {
+      Alert.alert('Export failed', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleImportBackup() {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+      const uri = result.assets[0].uri;
+      await importBackup(uri);
+      Alert.alert('Import successful', 'Your library has been restored.');
+    } catch (e) {
+      Alert.alert('Import failed', e instanceof Error ? e.message : String(e));
+    }
+  }
 
   return (
     <>
@@ -238,6 +290,16 @@ export default function SettingsScreen() {
             )}
           </View>
         </View>
+        {/* ─── Data ─── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data</Text>
+          <View style={styles.sectionCard}>
+            <ActionRow label="Export backup" onPress={handleExportBackup} />
+            <View style={styles.divider} />
+            <ActionRow label="Import backup" onPress={handleImportBackup} />
+          </View>
+        </View>
+
       </ScrollView>
     </>
   );
@@ -294,6 +356,9 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.sm,
     fontFamily: fontFamily.regular,
     color: colors.text.muted,
+  },
+  destructiveLabel: {
+    color: colors.status.error,
   },
 
   // Segment Chooser
