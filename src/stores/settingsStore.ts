@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ExtensionBridge from 'extension-bridge';
 
 export type Theme = 'dark' | 'amoled';
 export type ThemeMode = 'light' | 'dark' | 'system';
@@ -64,7 +65,14 @@ export const useSettingsStore = create<SettingsState>()(
       setGridSize: (gridSize) => set({ gridSize }),
       setLibraryDisplayMode: (libraryDisplayMode) => set({ libraryDisplayMode }),
       setShowUnreadBadges: (showUnreadBadges) => set({ showUnreadBadges }),
-      setLibraryUpdateInterval: (libraryUpdateInterval) => set({ libraryUpdateInterval }),
+      setLibraryUpdateInterval: (hours) => {
+        set({ libraryUpdateInterval: hours });
+        if (hours > 0) {
+          ExtensionBridge.scheduleLibraryUpdate(hours).catch(console.error);
+        } else {
+          ExtensionBridge.cancelLibraryUpdate().catch(console.error);
+        }
+      },
       setConcurrentDownloads: (concurrentDownloads) => set({ concurrentDownloads }),
       setDownloadOnWifiOnly: (downloadOnWifiOnly) => set({ downloadOnWifiOnly }),
       setCompressDownloads: (compressDownloads) => set({ compressDownloads }),

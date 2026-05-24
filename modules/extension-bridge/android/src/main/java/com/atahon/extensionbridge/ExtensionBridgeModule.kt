@@ -197,6 +197,15 @@ class ExtensionBridgeModule : Module() {
         AsyncFunction("stopDownloadService") {
             DownloadForegroundService.stop(context)
         }
+
+        // ── Background library update scheduling ──────────────────────────────────
+        AsyncFunction("scheduleLibraryUpdate") { intervalHours: Int ->
+            LibraryUpdateWorker.schedule(context, intervalHours)
+        }
+
+        AsyncFunction("cancelLibraryUpdate") {
+            LibraryUpdateWorker.cancel(context)
+        }
     }
 
     // ── Serialization helpers ────────────────────────────────────────────────────
