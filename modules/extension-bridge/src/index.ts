@@ -37,6 +37,8 @@ export interface ExtensionBridgeNativeModule {
   startDownloadService(totalCount: number): Promise<void>;
   updateDownloadNotification(completed: number, total: number, chapterName: string): Promise<void>;
   stopDownloadService(): Promise<void>;
+  scheduleLibraryUpdate(intervalHours: number): Promise<void>;
+  cancelLibraryUpdate(): Promise<void>;
 }
 
 // High-level typed wrapper
@@ -138,6 +140,14 @@ class ExtensionBridgeAPI {
     } catch (e) {
       console.warn('[ExtensionBridge] stopDownloadService failed:', e);
     }
+  }
+
+  async scheduleLibraryUpdate(intervalHours: number): Promise<void> {
+    return this.native().scheduleLibraryUpdate(intervalHours);
+  }
+
+  async cancelLibraryUpdate(): Promise<void> {
+    return this.native().cancelLibraryUpdate();
   }
 }
 
