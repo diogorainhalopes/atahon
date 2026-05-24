@@ -27,6 +27,14 @@ export interface InstalledExtensionInfo {
   sources: SourceInfo[];
 }
 
+export interface SourcePreferenceDefinition {
+  key: string;
+  title: string;
+  summary: string;
+  type: string;
+  currentValue: string;
+}
+
 export interface ExtensionBridgeNativeModule {
   loadInstalledExtensions(): Promise<InstalledExtensionInfo[]>;
   getInstalledExtensions(): Promise<InstalledExtensionInfo[]>;
@@ -34,6 +42,9 @@ export interface ExtensionBridgeNativeModule {
   installExtension(apkUrl: string, pkgName: string): Promise<InstalledExtensionInfo>;
   uninstallExtension(pkgName: string): Promise<void>;
   callSource(sourceId: string, method: string, params: Record<string, unknown>): Promise<string>;
+  openLoginWebView(sourceId: string, url: string): Promise<void>;
+  setSourcePreference(sourceId: string, key: string, value: string): Promise<void>;
+  getSourcePreferenceDefinitions(sourceId: string): Promise<SourcePreferenceDefinition[]>;
   startDownloadService(totalCount: number): Promise<void>;
   updateDownloadNotification(completed: number, total: number, chapterName: string): Promise<void>;
   stopDownloadService(): Promise<void>;
@@ -114,6 +125,18 @@ class ExtensionBridgeAPI {
     maxWidth?: number,
   ): Promise<void> {
     await this.call(sourceId, 'downloadPage', { imageUrl, destPath, quality, maxWidth });
+  }
+
+  async openLoginWebView(sourceId: string, url: string): Promise<void> {
+    return this.native().openLoginWebView(sourceId, url);
+  }
+
+  async setSourcePreference(sourceId: string, key: string, value: string): Promise<void> {
+    return this.native().setSourcePreference(sourceId, key, value);
+  }
+
+  async getSourcePreferenceDefinitions(sourceId: string): Promise<SourcePreferenceDefinition[]> {
+    return this.native().getSourcePreferenceDefinitions(sourceId);
   }
 
   async startDownloadService(totalCount: number): Promise<void> {

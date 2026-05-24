@@ -47,6 +47,7 @@ function SourceRow({ source, extensionName, onPress }: SourceRowProps) {
 interface FlatSource {
   source: SourceInfo;
   extensionName: string;
+  pkgName: string;
 }
 
 export default function BrowseScreen() {
@@ -55,7 +56,7 @@ export default function BrowseScreen() {
   const enabledSourceIds = useSourceStore((s) => s.enabledSourceIds);
 
   const allSources: FlatSource[] = extensions.flatMap((ext: InstalledExtensionInfo) =>
-    ext.sources.map((s) => ({ source: s, extensionName: ext.name })),
+    ext.sources.map((s) => ({ source: s, extensionName: ext.name, pkgName: ext.pkgName })),
   );
 
   const enabledSources = allSources.filter((s) => enabledSourceIds.includes(s.source.id));
@@ -118,7 +119,16 @@ export default function BrowseScreen() {
           <SourceRow
             source={item.source}
             extensionName={item.extensionName}
-            onPress={() => router.push({ pathname: '/browse/[sourceId]', params: { sourceId: item.source.id, name: item.source.name } })}
+            onPress={() => router.push({
+              pathname: '/browse/[sourceId]',
+              params: {
+                sourceId: item.source.id,
+                name: item.source.name,
+                pkgName: item.pkgName,
+                isConfigurable: item.source.isConfigurable ? '1' : '0',
+                baseUrl: item.source.baseUrl ?? '',
+              },
+            })}
           />
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
