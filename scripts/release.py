@@ -31,16 +31,33 @@ def parse_version(tag: str) -> tuple[int, int, int]:
     return int(m.group(1)), int(m.group(2)), int(m.group(3))
 
 
-def get_commits_since(tag: str | None) -> list[str]:
-    """Return list of commit subject+body strings since the given tag (or all commits)."""
+def get_commits_since(tag: str | None) -> list[tuple[str, list[str]]]:
+    """Return list of (subject, body_lines) tuples since the given tag (or all commits).
+
+    Uses a record separator so multi-line bodies are captured per commit.
+    """
+    sep = "---COMMIT_SEP---"
+    fmt = f"--pretty=format:%s%n%b{sep}"
     if tag:
-        log = run(f'git log {tag}..HEAD --pretty=format:"%s %b"')
+        raw = run(f"git log {tag}..HEAD {fmt}")
     else:
-        log = run('git log --pretty=format:"%s %b"')
-    return [line for line in log.splitlines() if line.strip()]
+        raw = run(f"git log {fmt}")
+
+    commits: list[tuple[str, list[str]]] = []
+    for block in raw.split(sep):
+        block = block.strip()
+        if not block:
+            continue
+        lines = block.splitlines()
+        subject = lines[0].strip()
+        if not subject:
+            continue
+        body_lines = [l.strip() for l in lines[1:] if l.strip()]
+        commits.append((subject, body_lines))
+    return commits
 
 
-def compute_next_version(tag: str | None, commits: list[str]) -> str:
+def compute_next_version(tag: str | None, commits: list[tuple[str, list[str]]]) -> str:
     if tag is None:
         return "v0.0.1"
 
@@ -49,11 +66,12 @@ def compute_next_version(tag: str | None, commits: list[str]) -> str:
     has_breaking = False
     has_feat = False
 
-    for msg in commits:
-        if "BREAKING CHANGE" in msg or re.search(r"\w+!:", msg):
+    for subject, body_lines in commits:
+        full = " ".join([subject] + body_lines)
+        if "BREAKING CHANGE" in full or re.search(r"\w+!:", subject):
             has_breaking = True
             break
-        if msg.startswith("feat:") or msg.startswith("feat("):
+        if subject.startswith("feat:") or subject.startswith("feat("):
             has_feat = True
 
     if has_breaking:
@@ -70,43 +88,40 @@ def compute_next_version(tag: str | None, commits: list[str]) -> str:
 
 
 CATEGORY_MAP = {
-    "feat": "Features",
-    "fix": "Bug Fixes",
-    "perf": "Performance",
-    "refactor": "Refactors",
-    "docs": "Documentation",
-    "test": "Tests",
-    "chore": "Chores",
+    "feat": "✨ Features",
+    "fix": "🐛 Bug Fixes",
+    "perf": "⚡ Performance",
+    "refactor": "♻️ Refactors",
+    "docs": "📚 Documentation",
+    "test": "✅ Tests",
+    "chore": "🔧 Chores",
 }
 
 
-def generate_notes(commits: list[str]) -> str:
+def generate_notes(commits: list[tuple[str, list[str]]]) -> str:
     """Group commits by conventional-commit type into markdown sections."""
-    categorized: dict[str, list[str]] = {}
+    categorized: dict[str, list[tuple[str, list[str]]]] = {}
 
-    for msg in commits:
-        matched = False
+    for subject, body_lines in commits:
         for prefix, category in CATEGORY_MAP.items():
-            if msg.startswith(f"{prefix}:") or msg.startswith(f"{prefix}("):
-                categorized.setdefault(category, []).append(msg.strip())
-                matched = True
+            if subject.startswith(f"{prefix}:") or subject.startswith(f"{prefix}("):
+                categorized.setdefault(category, []).append((subject, body_lines))
                 break
-        if not matched:
-            categorized.setdefault("Other", []).append(msg.strip())
+        # Unrecognised types are silently dropped (no "Other" section)
 
     if not categorized:
         return "No changes."
 
     lines = ["## What's Changed", ""]
 
-    # Ordered output: defined categories first, then Other
-    order = list(CATEGORY_MAP.values()) + ["Other"]
-    for section in order:
+    for section in CATEGORY_MAP.values():
         items = categorized.get(section)
         if items:
             lines.append(f"### {section}")
-            for item in items:
-                lines.append(f"- {item}")
+            for subject, body_lines in items:
+                lines.append(f"- **{subject}**")
+                for detail in body_lines:
+                    lines.append(f"  - {detail}")
             lines.append("")
 
     return "\n".join(lines).rstrip()

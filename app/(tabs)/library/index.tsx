@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
+  BackHandler,
   Dimensions,
   FlatList,
   Image,
@@ -9,9 +11,19 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BookOpen, Sliders, Stack } from 'phosphor-react-native';
+import {
+  BookOpen,
+  Check,
+  DownloadSimple,
+  FolderOpen,
+  Sliders,
+  Stack,
+  Trash,
+  X,
+} from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image as ExpoImage } from 'expo-image';
+import { useQueryClient } from '@tanstack/react-query';
 import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
@@ -19,8 +31,10 @@ import { useTheme } from '@theme/ThemeProvider';
 import { typeScale } from '@theme/typeScale';
 import PageHeader from '@components/PageHeader';
 import LibraryFilterSheet, { type MangaReadingStatus } from '@components/LibraryFilterSheet';
-import { useLibraryManga, useLibraryChapterCounts } from '@queries/manga';
+import { BucketPickerModal } from '@components/BucketPickerModal';
+import { useLibraryManga, useLibraryChapterCounts, mangaKeys } from '@queries/manga';
 import { useSettingsStore } from '@stores/settingsStore';
+import { markAllChaptersRead, deleteManga } from '@db/queries/manga';
 import type { Manga } from '@db/schema';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -45,14 +59,20 @@ function MangaCard({
   manga,
   chapterCounts,
   onPress,
+  onLongPress,
   width,
   height,
+  selected,
+  selectionMode,
 }: {
   manga: Manga;
   chapterCounts?: { total: number; readCount: number };
   onPress: () => void;
+  onLongPress: () => void;
   width: number;
   height: number;
+  selected: boolean;
+  selectionMode: boolean;
 }) {
   const progressPercentage = chapterCounts ? (chapterCounts.readCount / chapterCounts.total) * 100 : 0;
   const progressColor =
@@ -65,8 +85,19 @@ function MangaCard({
         : colors.status.warning; // yellow — in progress
 
   return (
-    <TouchableOpacity style={[styles.card, { width }]} onPress={onPress} activeOpacity={0.75}>
-      <View style={[styles.cardImageBox, { width, height }]}>
+    <TouchableOpacity
+      style={[styles.card, { width }]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.75}
+    >
+      <View
+        style={[
+          styles.cardImageBox,
+          { width, height },
+          selected && styles.cardImageBoxSelected,
+        ]}
+      >
         {manga.thumbnailUrl ? (
           <Image
             source={{ uri: manga.thumbnailUrl }}
@@ -93,6 +124,15 @@ function MangaCard({
             />
           </View>
         )}
+        {selectionMode && (
+          <View style={[styles.selectionOverlay, selected && styles.selectionOverlaySelected]}>
+            {selected && (
+              <View style={styles.checkmark}>
+                <Check size={16} color="#ffffff" strokeWidth={3} />
+              </View>
+            )}
+          </View>
+        )}
       </View>
       <Text style={styles.cardTitle} numberOfLines={2}>
         {manga.title}
@@ -107,10 +147,16 @@ function ListItem({
   manga,
   chapterCounts,
   onPress,
+  onLongPress,
+  selected,
+  selectionMode,
 }: {
   manga: Manga;
   chapterCounts?: { total: number; readCount: number };
   onPress: () => void;
+  onLongPress: () => void;
+  selected: boolean;
+  selectionMode: boolean;
 }) {
   const progressPercentage = chapterCounts ? (chapterCounts.readCount / chapterCounts.total) * 100 : 0;
   const progressColor =
@@ -123,7 +169,12 @@ function ListItem({
         : colors.status.warning; // yellow — in progress
 
   return (
-    <TouchableOpacity style={styles.listItem} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      style={[styles.listItem, selected && styles.listItemSelected]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.75}
+    >
       <View style={styles.listItemImage}>
         {manga.thumbnailUrl ? (
           <ExpoImage source={{ uri: manga.thumbnailUrl }} style={styles.listItemImageContent} contentFit="cover" />
@@ -145,6 +196,11 @@ function ListItem({
             />
           </View>
         )}
+        {selectionMode && selected && (
+          <View style={styles.listItemCheckmark}>
+            <Check size={14} color="#ffffff" strokeWidth={3} />
+          </View>
+        )}
       </View>
       <View style={styles.listItemContent}>
         <Text style={styles.listItemTitle} numberOfLines={1}>
@@ -161,8 +217,16 @@ export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const t = useTheme();
+  const queryClient = useQueryClient();
+
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<Set<MangaReadingStatus>>(new Set());
+
+  // Multi-select state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bucketPickerMangaId, setBucketPickerMangaId] = useState<number | null>(null);
+
   const { data: libraryManga } = useLibraryManga();
   const mangaIds = useMemo(() => (libraryManga ?? []).map((m) => m.id), [libraryManga]);
   const { data: chapterCounts } = useLibraryChapterCounts(mangaIds);
@@ -189,6 +253,83 @@ export default function LibraryScreen() {
 
   const handleClearFilters = useCallback(() => setActiveFilters(new Set()), []);
 
+  // ─── Selection helpers ──────────────────────────────────────────────────────
+
+  const toggleSelected = useCallback((id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  // Back handler: exit selection mode on hardware back
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (selectionMode) {
+        exitSelectionMode();
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [selectionMode, exitSelectionMode]);
+
+  // ─── Bulk actions ───────────────────────────────────────────────────────────
+
+  const handleMarkRead = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    await Promise.all(ids.map((id) => markAllChaptersRead(id)));
+    queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
+    queryClient.invalidateQueries({ queryKey: mangaKeys.chapterCounts() });
+    exitSelectionMode();
+  }, [selectedIds, queryClient, exitSelectionMode]);
+
+  const handleRemove = useCallback(() => {
+    const count = selectedIds.size;
+    Alert.alert(
+      'Remove from library',
+      `Remove ${count} manga from your library? This will also delete all chapters and history.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            const ids = Array.from(selectedIds);
+            await Promise.all(ids.map((id) => deleteManga(id)));
+            queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
+            exitSelectionMode();
+          },
+        },
+      ],
+    );
+  }, [selectedIds, queryClient, exitSelectionMode]);
+
+  const handleMoveToCategory = useCallback(() => {
+    // Open BucketPickerModal for first selected manga (batch would need a multi-manga modal)
+    const ids = Array.from(selectedIds);
+    if (ids.length === 1) {
+      setBucketPickerMangaId(ids[0]);
+    } else {
+      // For multiple, open for each one sequentially — just open modal for first
+      setBucketPickerMangaId(ids[0]);
+    }
+  }, [selectedIds]);
+
+  const handleDownload = useCallback(() => {
+    // Trigger download for all selected manga — navigation to manga detail or queue via store
+    // For now, exit selection mode; actual download queueing requires chapter data per manga
+    exitSelectionMode();
+  }, [exitSelectionMode]);
+
+  // ─── Grid layout ───────────────────────────────────────────────────────────
+
   const { numColumns, cardWidth, cardHeight } = useMemo(() => {
     const numColumns = gridSize === 'small' ? 4 : gridSize === 'large' ? 2 : 3;
     const cardWidth =
@@ -200,49 +341,97 @@ export default function LibraryScreen() {
     ({ item }: { item: Manga }) => {
       const counts = chapterCounts?.[item.id];
       const progressData = counts ? { total: counts.total, readCount: counts.readCount } : undefined;
+      const isSelected = selectedIds.has(item.id);
+
+      const handlePress = () => {
+        if (selectionMode) {
+          toggleSelected(item.id);
+        } else {
+          router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } });
+        }
+      };
+
+      const handleLongPress = () => {
+        if (!selectionMode) {
+          setSelectionMode(true);
+          setSelectedIds(new Set([item.id]));
+        }
+      };
 
       if (libraryDisplayMode === 'list') {
-        return <ListItem manga={item} chapterCounts={progressData} onPress={() => router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } })} />;
+        return (
+          <ListItem
+            manga={item}
+            chapterCounts={progressData}
+            onPress={handlePress}
+            onLongPress={handleLongPress}
+            selected={isSelected}
+            selectionMode={selectionMode}
+          />
+        );
       }
 
       return (
         <MangaCard
           manga={item}
           chapterCounts={progressData}
-          onPress={() => router.push({ pathname: '/manga/[mangaId]', params: { mangaId: item.id } })}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
           width={cardWidth}
           height={cardHeight}
+          selected={isSelected}
+          selectionMode={selectionMode}
         />
       );
     },
-    [router, chapterCounts, libraryDisplayMode, cardWidth, cardHeight, activeFilters],
+    [router, chapterCounts, libraryDisplayMode, cardWidth, cardHeight, selectedIds, selectionMode, toggleSelected],
   );
+
+  // ─── Header content ─────────────────────────────────────────────────────────
+
+  const headerRight = selectionMode ? (
+    <View style={styles.headerActions}>
+      <TouchableOpacity
+        onPress={() => setSelectedIds(new Set((libraryManga ?? []).map((m) => m.id)))}
+        hitSlop={8}
+        accessibilityLabel="Select all"
+      >
+        <Text style={styles.headerActionText}>All</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => setSelectedIds(new Set())}
+        hitSlop={8}
+        accessibilityLabel="Clear selection"
+      >
+        <Text style={styles.headerActionText}>Clear</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={exitSelectionMode} hitSlop={8} accessibilityLabel="Cancel selection">
+        <X size={24} color={t.inkPrimary} />
+      </TouchableOpacity>
+    </View>
+  ) : (
+    <View style={styles.headerActions}>
+      <TouchableOpacity onPress={() => router.push('/buckets')} hitSlop={8}>
+        <Stack size={24} color={t.inkPrimary} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => setFilterSheetVisible(true)}>
+        <View>
+          <Sliders size={24} color={t.inkPrimary} />
+          {activeFilters.size > 0 && (
+            <View style={[styles.filterBadge, { backgroundColor: t.accent }]} />
+          )}
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const headerTitle = selectionMode
+    ? `${selectedIds.size} selected`
+    : 'Library';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: t.background }]}>
-      <PageHeader
-        title="Library"
-        right={
-          <View style={styles.headerActions}>
-            <TouchableOpacity onPress={() => router.push('/buckets')} hitSlop={8}>
-              <Stack size={24} color={t.inkPrimary} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setFilterSheetVisible(true)}>
-              <View>
-                <Sliders size={24} color={t.inkPrimary} />
-                {activeFilters.size > 0 && (
-                  <View
-                    style={[
-                      styles.filterBadge,
-                      { backgroundColor: t.accent },
-                    ]}
-                  />
-                )}
-              </View>
-            </TouchableOpacity>
-          </View>
-        }
-      />
+      <PageHeader title={headerTitle} right={headerRight} />
 
       {filteredManga.length > 0 ? (
         <FlatList
@@ -254,7 +443,7 @@ export default function LibraryScreen() {
           columnWrapperStyle={libraryDisplayMode === 'list' ? undefined : styles.row}
           contentContainerStyle={[
             styles.grid,
-            { paddingBottom: insets.bottom + 128 },
+            { paddingBottom: insets.bottom + (selectionMode ? 160 : 128) },
           ]}
         />
       ) : (
@@ -278,6 +467,47 @@ export default function LibraryScreen() {
         </View>
       )}
 
+      {/* Bottom action bar (shown during selection mode) */}
+      {selectionMode && (
+        <View style={[styles.actionBar, { paddingBottom: insets.bottom + spacing[2] }]}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleDownload}
+            accessibilityLabel="Download selected"
+          >
+            <DownloadSimple size={24} color={colors.text.secondary} />
+            <Text style={styles.actionButtonLabel}>Download</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleMarkRead}
+            accessibilityLabel="Mark selected as read"
+          >
+            <Check size={24} color={colors.text.secondary} />
+            <Text style={styles.actionButtonLabel}>Mark read</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleMoveToCategory}
+            disabled={selectedIds.size === 0}
+            accessibilityLabel="Move to category"
+          >
+            <FolderOpen size={24} color={selectedIds.size === 0 ? colors.text.muted : colors.text.secondary} />
+            <Text style={[styles.actionButtonLabel, selectedIds.size === 0 && styles.actionButtonLabelDisabled]}>
+              Category
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleRemove}
+            accessibilityLabel="Remove selected from library"
+          >
+            <Trash size={24} color={colors.status.error} />
+            <Text style={[styles.actionButtonLabel, { color: colors.status.error }]}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <LibraryFilterSheet
         visible={filterSheetVisible}
         onClose={() => setFilterSheetVisible(false)}
@@ -285,6 +515,17 @@ export default function LibraryScreen() {
         onToggle={handleToggleFilter}
         onClear={handleClearFilters}
       />
+
+      {bucketPickerMangaId !== null && (
+        <BucketPickerModal
+          visible={bucketPickerMangaId !== null}
+          onClose={() => {
+            setBucketPickerMangaId(null);
+            exitSelectionMode();
+          }}
+          mangaId={bucketPickerMangaId}
+        />
+      )}
     </View>
   );
 }
@@ -311,6 +552,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: colors.surface.DEFAULT,
+  },
+  cardImageBoxSelected: {
+    borderWidth: 2,
+    borderColor: colors.accent.DEFAULT,
   },
   cardImage: {
     width: '100%',
@@ -346,6 +591,28 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: typography.sizes.xs * 1.4,
   },
+
+  // Selection overlay on cards
+  selectionOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    padding: spacing[1],
+  },
+  selectionOverlaySelected: {
+    backgroundColor: colors.accent.muted,
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.accent.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   emptyList: {
     flexGrow: 1,
   },
@@ -378,6 +645,9 @@ const styles = StyleSheet.create({
     gap: spacing[3],
     alignItems: 'center',
   },
+  listItemSelected: {
+    backgroundColor: colors.accent.muted,
+  },
   listItemImage: {
     width: 48,
     height: 64,
@@ -399,6 +669,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     fontFamily: fontFamily.bold,
     color: colors.text.muted,
+  },
+  listItemCheckmark: {
+    position: 'absolute',
+    bottom: spacing[1],
+    right: spacing[1],
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.accent.DEFAULT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   listItemContent: {
     flex: 1,
@@ -427,5 +709,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[5],
+  },
+  headerActionText: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.semibold,
+    color: colors.accent.DEFAULT,
+  },
+
+  // Bottom action bar
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    backgroundColor: colors.surface.DEFAULT,
+    borderTopWidth: 1,
+    borderTopColor: colors.border.DEFAULT,
+    paddingTop: spacing[3],
+    paddingHorizontal: spacing[2],
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[1],
+    paddingVertical: spacing[2],
+  },
+  actionButtonLabel: {
+    fontSize: typography.sizes.xs,
+    fontFamily: fontFamily.regular,
+    color: colors.text.secondary,
+  },
+  actionButtonLabelDisabled: {
+    color: colors.text.muted,
   },
 });

@@ -248,6 +248,21 @@ export async function upsertChaptersFromSource(
     .where(and(eq(chapter.mangaId, mangaId), inArray(chapter.sourceUrl, newUrls)));
 }
 
+// ─── Mark all chapters of a manga as read ────────────────────────────────────
+
+export async function markAllChaptersRead(mangaId: number): Promise<void> {
+  await db
+    .update(chapter)
+    .set({ read: true })
+    .where(and(eq(chapter.mangaId, mangaId), eq(chapter.read, false)));
+}
+
+// ─── Delete manga from library ────────────────────────────────────────────────
+
+export async function deleteManga(mangaId: number): Promise<void> {
+  await db.delete(manga).where(eq(manga.id, mangaId));
+}
+
 // ─── Library chapter counts ────────────────────────────────────────────────
 
 export interface ChapterCount {
