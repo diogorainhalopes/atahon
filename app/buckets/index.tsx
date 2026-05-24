@@ -66,17 +66,24 @@ function BucketCard({
         {thumbnails.length > 0 ? (
           <>
             <View style={styles.thumbnailGrid}>
-              {[0, 1, 2, 3].map((i) => (
-                <View key={i} style={{ width: thumbW, height: thumbH }}>
-                  {thumbnails[i] ? (
-                    <Image
-                      source={{ uri: thumbnails[i] }}
-                      style={styles.thumbnailImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.thumbnailEmpty} />
-                  )}
+              {([0, 1] as const).map((row) => (
+                <View key={row} style={styles.thumbnailRow}>
+                  {([0, 1] as const).map((col) => {
+                    const i = row * 2 + col;
+                    return (
+                      <View key={col} style={{ width: thumbW, height: thumbH }}>
+                        {thumbnails[i] ? (
+                          <Image
+                            source={{ uri: thumbnails[i] }}
+                            style={styles.thumbnailImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.thumbnailEmpty} />
+                        )}
+                      </View>
+                    );
+                  })}
                 </View>
               ))}
             </View>
@@ -428,10 +435,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   thumbnailGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     width: '100%',
     height: '100%',
+  },
+  thumbnailRow: {
+    flexDirection: 'row',
   },
   thumbnailImage: {
     width: '100%',

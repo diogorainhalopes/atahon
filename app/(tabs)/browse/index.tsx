@@ -1,4 +1,6 @@
+import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import Screen from '@components/Screen';
 import PageHeader from '@components/PageHeader';
@@ -7,7 +9,7 @@ import { colors } from '@theme/colors';
 import { typography, fontFamily } from '@theme/typography';
 import { radius, spacing } from '@theme/spacing';
 import { typeScale } from '@theme/typeScale';
-import { useInstalledExtensions } from '@queries/extensions';
+import { useInstalledExtensions, useMergedExtensions, useRepos } from '@queries/extensions';
 import { useSourceStore } from '@stores/sourceStore';
 import type { InstalledExtensionInfo } from 'extension-bridge';
 import type { SourceInfo } from '@/types/extensions';
@@ -17,15 +19,27 @@ import type { SourceInfo } from '@/types/extensions';
 interface SourceRowProps {
   source: SourceInfo;
   extensionName: string;
+  iconUrl?: string;
   onPress: () => void;
 }
 
-function SourceRow({ source, extensionName, onPress }: SourceRowProps) {
+function SourceRow({ source, extensionName, iconUrl, onPress }: SourceRowProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <TouchableOpacity style={styles.sourceRow} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.sourceIcon}>
-        <Text style={styles.sourceIconText}>{source.name.charAt(0).toUpperCase()}</Text>
-      </View>
+      {iconUrl && !imageError ? (
+        <Image
+          source={{ uri: iconUrl }}
+          style={styles.sourceIcon}
+          contentFit="contain"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <View style={styles.sourceIcon}>
+          <Text style={styles.sourceIconText}>{source.name.charAt(0).toUpperCase()}</Text>
+        </View>
+      )}
       <View style={styles.sourceInfo}>
         <Text style={styles.sourceName} numberOfLines={1}>{source.name}</Text>
         <Text style={styles.sourceMeta}>{extensionName} • {source.lang.toUpperCase()}</Text>
@@ -47,15 +61,30 @@ function SourceRow({ source, extensionName, onPress }: SourceRowProps) {
 interface FlatSource {
   source: SourceInfo;
   extensionName: string;
+  iconUrl?: string;
 }
 
 export default function BrowseScreen() {
   const router = useRouter();
   const { data: extensions = [], isLoading } = useInstalledExtensions();
+  const { data: repos = [] } = useRepos();
+  const { data: mergedExtensions } = useMergedExtensions(repos);
   const enabledSourceIds = useSourceStore((s) => s.enabledSourceIds);
 
+  const iconMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ext of mergedExtensions) {
+      if (ext.iconUrl) map.set(ext.pkgName, ext.iconUrl);
+    }
+    return map;
+  }, [mergedExtensions]);
+
   const allSources: FlatSource[] = extensions.flatMap((ext: InstalledExtensionInfo) =>
-    ext.sources.map((s) => ({ source: s, extensionName: ext.name })),
+    ext.sources.map((s) => ({
+      source: s,
+      extensionName: ext.name,
+      iconUrl: iconMap.get(ext.pkgName),
+    })),
   );
 
   const enabledSources = allSources.filter((s) => enabledSourceIds.includes(s.source.id));
@@ -118,6 +147,7 @@ export default function BrowseScreen() {
           <SourceRow
             source={item.source}
             extensionName={item.extensionName}
+            iconUrl={item.iconUrl}
             onPress={() => router.push({ pathname: '/browse/[sourceId]', params: { sourceId: item.source.id, name: item.source.name } })}
           />
         )}

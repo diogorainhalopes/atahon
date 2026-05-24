@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   BackHandler,
   Dimensions,
   FlatList,
-  Image,
+  Modal,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,7 +14,6 @@ import { useRouter } from 'expo-router';
 import {
   BookOpen,
   Check,
-  DownloadSimple,
   FolderOpen,
   Sliders,
   Stack,
@@ -34,7 +33,7 @@ import LibraryFilterSheet, { type MangaReadingStatus } from '@components/Library
 import { BucketPickerModal } from '@components/BucketPickerModal';
 import { useLibraryManga, useLibraryChapterCounts, mangaKeys } from '@queries/manga';
 import { useSettingsStore } from '@stores/settingsStore';
-import { markAllChaptersRead, deleteManga } from '@db/queries/manga';
+import { deleteManga } from '@db/queries/manga';
 import type { Manga } from '@db/schema';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -91,18 +90,12 @@ function MangaCard({
       onLongPress={onLongPress}
       activeOpacity={0.75}
     >
-      <View
-        style={[
-          styles.cardImageBox,
-          { width, height },
-          selected && styles.cardImageBoxSelected,
-        ]}
-      >
+      <View style={[styles.cardImageBox, { width, height }]}>
         {manga.thumbnailUrl ? (
-          <Image
+          <ExpoImage
             source={{ uri: manga.thumbnailUrl }}
             style={styles.cardImage}
-            resizeMode="cover"
+            contentFit="cover"
           />
         ) : (
           <View style={styles.cardPlaceholder}>
@@ -128,11 +121,12 @@ function MangaCard({
           <View style={[styles.selectionOverlay, selected && styles.selectionOverlaySelected]}>
             {selected && (
               <View style={styles.checkmark}>
-                <Check size={16} color="#ffffff" strokeWidth={3} />
+                <Check size={16} color="#ffffff" weight="bold" />
               </View>
             )}
           </View>
         )}
+        {selected && <View style={styles.selectedBorder} />}
       </View>
       <Text style={styles.cardTitle} numberOfLines={2}>
         {manga.title}
@@ -225,7 +219,8 @@ export default function LibraryScreen() {
   // Multi-select state
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [bucketPickerMangaId, setBucketPickerMangaId] = useState<number | null>(null);
+  const [bucketPickerMangaIds, setBucketPickerMangaIds] = useState<number[] | null>(null);
+  const [confirmRemoveVisible, setConfirmRemoveVisible] = useState(false);
 
   const { data: libraryManga } = useLibraryManga();
   const mangaIds = useMemo(() => (libraryManga ?? []).map((m) => m.id), [libraryManga]);
@@ -282,51 +277,21 @@ export default function LibraryScreen() {
 
   // ─── Bulk actions ───────────────────────────────────────────────────────────
 
-  const handleMarkRead = useCallback(async () => {
-    const ids = Array.from(selectedIds);
-    await Promise.all(ids.map((id) => markAllChaptersRead(id)));
-    queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
-    queryClient.invalidateQueries({ queryKey: mangaKeys.chapterCounts() });
-    exitSelectionMode();
-  }, [selectedIds, queryClient, exitSelectionMode]);
-
   const handleRemove = useCallback(() => {
-    const count = selectedIds.size;
-    Alert.alert(
-      'Remove from library',
-      `Remove ${count} manga from your library? This will also delete all chapters and history.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            const ids = Array.from(selectedIds);
-            await Promise.all(ids.map((id) => deleteManga(id)));
-            queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
-            exitSelectionMode();
-          },
-        },
-      ],
-    );
+    setConfirmRemoveVisible(true);
+  }, []);
+
+  const handleConfirmRemove = useCallback(async () => {
+    setConfirmRemoveVisible(false);
+    const ids = Array.from(selectedIds);
+    await Promise.all(ids.map((id) => deleteManga(id)));
+    queryClient.invalidateQueries({ queryKey: mangaKeys.library() });
+    exitSelectionMode();
   }, [selectedIds, queryClient, exitSelectionMode]);
 
   const handleMoveToCategory = useCallback(() => {
-    // Open BucketPickerModal for first selected manga (batch would need a multi-manga modal)
-    const ids = Array.from(selectedIds);
-    if (ids.length === 1) {
-      setBucketPickerMangaId(ids[0]);
-    } else {
-      // For multiple, open for each one sequentially — just open modal for first
-      setBucketPickerMangaId(ids[0]);
-    }
+    setBucketPickerMangaIds(Array.from(selectedIds));
   }, [selectedIds]);
-
-  const handleDownload = useCallback(() => {
-    // Trigger download for all selected manga — navigation to manga detail or queue via store
-    // For now, exit selection mode; actual download queueing requires chapter data per manga
-    exitSelectionMode();
-  }, [exitSelectionMode]);
 
   // ─── Grid layout ───────────────────────────────────────────────────────────
 
@@ -439,11 +404,12 @@ export default function LibraryScreen() {
           data={filteredManga}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
+          extraData={selectedIds}
           numColumns={libraryDisplayMode === 'list' ? 1 : numColumns}
           columnWrapperStyle={libraryDisplayMode === 'list' ? undefined : styles.row}
           contentContainerStyle={[
             styles.grid,
-            { paddingBottom: insets.bottom + (selectionMode ? 160 : 128) },
+            { paddingBottom: insets.bottom + (selectionMode ? 220 : 128) },
           ]}
         />
       ) : (
@@ -468,33 +434,18 @@ export default function LibraryScreen() {
       )}
 
       {/* Bottom action bar (shown during selection mode) */}
+      {/* Tab bar is 56px tall at bottom: insets.bottom + 12, so position above it */}
       {selectionMode && (
-        <View style={[styles.actionBar, { paddingBottom: insets.bottom + spacing[2] }]}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleDownload}
-            accessibilityLabel="Download selected"
-          >
-            <DownloadSimple size={24} color={colors.text.secondary} />
-            <Text style={styles.actionButtonLabel}>Download</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={handleMarkRead}
-            accessibilityLabel="Mark selected as read"
-          >
-            <Check size={24} color={colors.text.secondary} />
-            <Text style={styles.actionButtonLabel}>Mark read</Text>
-          </TouchableOpacity>
+        <View style={[styles.actionBar, { bottom: insets.bottom + 76 }]}>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={handleMoveToCategory}
             disabled={selectedIds.size === 0}
-            accessibilityLabel="Move to category"
+            accessibilityLabel="Add to bucket"
           >
             <FolderOpen size={24} color={selectedIds.size === 0 ? colors.text.muted : colors.text.secondary} />
             <Text style={[styles.actionButtonLabel, selectedIds.size === 0 && styles.actionButtonLabelDisabled]}>
-              Category
+              Add to bucket
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -516,16 +467,53 @@ export default function LibraryScreen() {
         onClear={handleClearFilters}
       />
 
-      {bucketPickerMangaId !== null && (
+      {bucketPickerMangaIds !== null && (
         <BucketPickerModal
-          visible={bucketPickerMangaId !== null}
+          visible={bucketPickerMangaIds !== null}
           onClose={() => {
-            setBucketPickerMangaId(null);
+            setBucketPickerMangaIds(null);
             exitSelectionMode();
           }}
-          mangaId={bucketPickerMangaId}
+          mangaIds={bucketPickerMangaIds}
         />
       )}
+
+      {confirmRemoveVisible && (
+        <Pressable style={styles.backdropFixed} onPress={() => setConfirmRemoveVisible(false)} />
+      )}
+      <Modal
+        visible={confirmRemoveVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setConfirmRemoveVisible(false)}
+      >
+        <Pressable style={styles.backdropCentering} onPress={() => setConfirmRemoveVisible(false)}>
+          <Pressable style={styles.confirmModal} onPress={() => {}}>
+            <Text style={styles.confirmTitle}>Remove from library</Text>
+            <Text style={styles.confirmText}>
+              {selectedIds.size === 1 ? (
+                `Remove ${selectedIds.size} manga from your library? This will also delete all chapters and history.`
+              ) : (
+                `Remove ${selectedIds.size} mangas from your library? This will also delete all chapters and history.`
+              )}
+            </Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.confirmCancelBtn]}
+                onPress={() => setConfirmRemoveVisible(false)}
+              >
+                <Text style={styles.confirmCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmBtn, styles.confirmDestructiveBtn]}
+                onPress={handleConfirmRemove}
+              >
+                <Text style={styles.confirmDestructiveText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -553,9 +541,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: colors.surface.DEFAULT,
   },
-  cardImageBoxSelected: {
+  selectedBorder: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radius.md,
     borderWidth: 2,
     borderColor: colors.accent.DEFAULT,
+    zIndex: 3,
   },
   cardImage: {
     width: '100%',
@@ -743,5 +734,65 @@ const styles = StyleSheet.create({
   },
   actionButtonLabelDisabled: {
     color: colors.text.muted,
+  },
+
+  backdropFixed: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    zIndex: 999,
+  },
+  backdropCentering: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing[5],
+  },
+  confirmModal: {
+    backgroundColor: colors.background.card,
+    borderRadius: radius['2xl'],
+    padding: spacing[5],
+    width: '100%',
+    maxWidth: 320,
+  },
+  confirmTitle: {
+    fontSize: typography.sizes.lg,
+    fontFamily: fontFamily.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing[3],
+  },
+  confirmText: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.text.secondary,
+    lineHeight: typography.sizes.sm * 1.5,
+    marginBottom: spacing[5],
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: spacing[2],
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: spacing[2.5],
+    borderRadius: radius.lg,
+    alignItems: 'center',
+  },
+  confirmCancelBtn: {
+    backgroundColor: colors.surface.DEFAULT,
+    borderWidth: 1,
+    borderColor: colors.border.DEFAULT,
+  },
+  confirmCancelText: {
+    fontSize: typography.sizes.base,
+    fontFamily: fontFamily.semibold,
+    color: colors.text.primary,
+  },
+  confirmDestructiveBtn: {
+    backgroundColor: colors.status.error,
+  },
+  confirmDestructiveText: {
+    fontSize: typography.sizes.base,
+    fontFamily: fontFamily.semibold,
+    color: '#ffffff',
   },
 });

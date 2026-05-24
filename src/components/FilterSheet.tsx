@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -19,6 +20,7 @@ interface FilterSheetProps {
   visible: boolean;
   onClose: () => void;
   filters: Filter[];
+  isLoading?: boolean;
   onApply: (filters: Filter[]) => void;
 }
 
@@ -275,11 +277,16 @@ function GroupFilter({
 
 // ─── Main FilterSheet ─────────────────────────────────────────────────────────
 
-export default function FilterSheet({ visible, onClose, filters, onApply }: FilterSheetProps) {
+export default function FilterSheet({ visible, onClose, filters, isLoading, onApply }: FilterSheetProps) {
   const [localFilters, setLocalFilters] = useState<Filter[]>(() => cloneFilters(filters));
 
-  // Sync localFilters when external filters change (e.g., first load)
-  // Use key on parent to remount if needed
+  // Sync whenever filters prop changes (covers the first-load case where the sheet
+  // opens before useSourceFilters has resolved and filters arrives as [])
+  useEffect(() => {
+    if (filters.length > 0) {
+      setLocalFilters(cloneFilters(filters));
+    }
+  }, [filters]);
 
   function handleFilterChange(index: number, newState: unknown) {
     setLocalFilters((prev) =>
@@ -305,6 +312,13 @@ export default function FilterSheet({ visible, onClose, filters, onApply }: Filt
           <Pressable style={styles.sheet} onPress={() => {}}>
             <View style={styles.handle} />
             <Text style={styles.sheetTitle}>Filters</Text>
+
+            {(isLoading || localFilters.length === 0) ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color={colors.accent.DEFAULT} />
+                <Text style={styles.loadingText}>Loading filters…</Text>
+              </View>
+            ) : null}
 
             <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
               {localFilters.map((filter, index) => {
@@ -420,6 +434,18 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flexGrow: 0,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[3],
+    paddingVertical: spacing[8],
+  },
+  loadingText: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.regular,
+    color: colors.text.muted,
   },
   sectionHeader: {
     paddingTop: spacing[3],

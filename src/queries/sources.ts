@@ -56,7 +56,7 @@ export function useSearchManga(
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasNextPage ? allPages.length + 1 : undefined,
     staleTime: 5 * 60_000,
-    enabled: enabled && query.length > 0,
+    enabled: enabled && (query.length > 0 || activeFilters.filters.length > 0),
   });
 }
 

@@ -9,24 +9,27 @@ import { useCategories, useCategoryIdsForManga, useToggleMangaInCategory } from 
 interface BucketPickerModalProps {
   visible: boolean;
   onClose: () => void;
-  mangaId: number;
+  mangaIds: number[];
 }
 
-export function BucketPickerModal({ visible, onClose, mangaId }: BucketPickerModalProps) {
+export function BucketPickerModal({ visible, onClose, mangaIds }: BucketPickerModalProps) {
   const [localSelected, setLocalSelected] = useState<Set<number>>(new Set());
 
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
-  const { data: currentIds = [], isLoading: currentIdsLoading } = useCategoryIdsForManga(mangaId);
+  // For a single manga, pre-load its current buckets so the modal shows existing state
+  const firstId = mangaIds[0] ?? -1;
+  const { data: currentIds = [], isLoading: currentIdsLoading } = useCategoryIdsForManga(firstId);
   const toggleMutation = useToggleMangaInCategory();
 
-  const isLoading = categoriesLoading || currentIdsLoading;
+  const isSingle = mangaIds.length === 1;
+  const isLoading = categoriesLoading || (isSingle && currentIdsLoading);
 
-  // Re-sync when modal opens or when currentIds arrives
+  // Re-sync when modal opens — for single manga show its current buckets, for multi start blank
   useEffect(() => {
-    if (visible && currentIds) {
-      setLocalSelected(new Set(currentIds));
+    if (visible) {
+      setLocalSelected(isSingle ? new Set(currentIds) : new Set());
     }
-  }, [visible, currentIds]);
+  }, [visible, currentIds, isSingle]);
 
   const handleToggle = (categoryId: number) => {
     const isSelected = localSelected.has(categoryId);
@@ -38,11 +41,9 @@ export function BucketPickerModal({ visible, onClose, mangaId }: BucketPickerMod
     }
     setLocalSelected(newSelected);
 
-    // Fire mutation immediately (optimistic)
-    toggleMutation.mutate({
-      mangaId,
-      categoryId,
-      add: !isSelected,
+    // Fire mutation for every selected manga
+    mangaIds.forEach((mangaId) => {
+      toggleMutation.mutate({ mangaId, categoryId, add: !isSelected });
     });
   };
 

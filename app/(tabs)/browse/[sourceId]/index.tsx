@@ -11,8 +11,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CaretLeft, MagnifyingGlass, X } from 'phosphor-react-native';
-import { Sliders } from 'phosphor-react-native';
+import { CaretLeft, Funnel, MagnifyingGlass, X } from 'phosphor-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@theme/colors';
@@ -89,7 +88,7 @@ export default function SourceBrowseScreen() {
   const [activeFilters, setActiveFilters] = useState<Filter[]>([]);
 
   const { data: libraryUrls } = useLibrarySourceUrls(sourceId);
-  const { data: sourceFiltersData } = useSourceFilters(sourceId);
+  const { data: sourceFiltersData, isLoading: filtersLoading } = useSourceFilters(sourceId);
   const upsert = useUpsertBrowseManga();
   const popularQuery = usePopularManga(sourceId);
   const latestQuery = useLatestUpdates(sourceId);
@@ -194,8 +193,9 @@ export default function SourceBrowseScreen() {
             style={[styles.searchBtn, activeFilters.length > 0 && styles.filterBtnActive]}
             activeOpacity={0.7}
           >
-            <Sliders
+            <Funnel
               size={22}
+              weight={activeFilters.length > 0 ? 'fill' : 'regular'}
               color={activeFilters.length > 0 ? colors.accent.DEFAULT : colors.text.primary}
             />
           </TouchableOpacity>
@@ -299,9 +299,11 @@ export default function SourceBrowseScreen() {
         visible={filterSheetVisible}
         onClose={() => setFilterSheetVisible(false)}
         filters={sourceFiltersData?.filters ?? []}
+        isLoading={filtersLoading}
         onApply={(applied) => {
           setActiveFilters(applied);
           setFilterSheetVisible(false);
+          setTab(applied.length > 0 ? 'search' : 'popular');
         }}
       />
     </View>

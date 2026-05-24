@@ -1068,7 +1068,7 @@ export default function MangaDetailScreen() {
       <BucketPickerModal
         visible={bucketPickerVisible}
         onClose={() => setBucketPickerVisible(false)}
-        mangaId={numericId}
+        mangaIds={[numericId]}
       />
     </>
   );

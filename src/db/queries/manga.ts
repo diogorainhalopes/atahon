@@ -260,7 +260,10 @@ export async function markAllChaptersRead(mangaId: number): Promise<void> {
 // ─── Delete manga from library ────────────────────────────────────────────────
 
 export async function deleteManga(mangaId: number): Promise<void> {
-  await db.delete(manga).where(eq(manga.id, mangaId));
+  await db
+    .update(manga)
+    .set({ inLibrary: false, libraryAddedAt: null })
+    .where(eq(manga.id, mangaId));
 }
 
 // ─── Library chapter counts ────────────────────────────────────────────────

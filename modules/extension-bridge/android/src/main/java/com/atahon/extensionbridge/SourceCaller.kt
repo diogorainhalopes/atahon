@@ -49,7 +49,9 @@ object SourceCaller {
                     "searchManga" -> {
                         val page = (params["page"] as? Number)?.toInt() ?: 1
                         val query = params["query"] as? String ?: ""
-                        serializeMangasPage((src as CatalogueSource).getSearchManga(page, query, FilterList()))
+                        val catalogueSrc = src as CatalogueSource
+                        val filterList = buildFilterList(catalogueSrc.getFilterList(), params["filters"])
+                        serializeMangasPage(catalogueSrc.getSearchManga(page, query, filterList))
                     }
                     "getMangaDetails" -> {
                         val url = params["mangaUrl"] as? String
@@ -236,6 +238,57 @@ object SourceCaller {
             throw e
         } finally {
             Thread.currentThread().contextClassLoader = callerClassLoader
+        }
+    }
+
+    // ─── Filter deserialization ───────────────────────────────────────────────
+    // Filters can't be reconstructed from scratch — extensions define concrete subclasses.
+    // Strategy: call getFilterList() to get fresh instances, then mutate their state
+    // using the JS-supplied values before passing to getSearchManga.
+
+    @Suppress("UNCHECKED_CAST")
+    private fun buildFilterList(base: FilterList, filtersParam: Any?): FilterList {
+        val wrapper = filtersParam as? Map<String, Any?> ?: return base
+        val stateList = wrapper["filters"] as? List<Any?> ?: return base
+        val filters = base.list
+        for (i in filters.indices) {
+            val stateMap = stateList.getOrNull(i) as? Map<String, Any?> ?: continue
+            applyState(filters[i], stateMap)
+        }
+        return base
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun applyState(
+        filter: eu.kanade.tachiyomi.source.model.Filter<*>,
+        map: Map<String, Any?>,
+    ) {
+        when (filter) {
+            is eu.kanade.tachiyomi.source.model.Filter.Text ->
+                filter.state = map["state"] as? String ?: filter.state
+            is eu.kanade.tachiyomi.source.model.Filter.CheckBox ->
+                filter.state = map["state"] as? Boolean ?: filter.state
+            is eu.kanade.tachiyomi.source.model.Filter.TriState ->
+                filter.state = (map["state"] as? Number)?.toInt() ?: filter.state
+            is eu.kanade.tachiyomi.source.model.Filter.Select<*> ->
+                (filter as eu.kanade.tachiyomi.source.model.Filter.Select<Any>).state =
+                    (map["state"] as? Number)?.toInt() ?: filter.state
+            is eu.kanade.tachiyomi.source.model.Filter.Sort -> {
+                val s = map["state"] as? Map<String, Any?> ?: return
+                filter.state = eu.kanade.tachiyomi.source.model.Filter.Sort.Selection(
+                    (s["index"] as? Number)?.toInt() ?: 0,
+                    s["ascending"] as? Boolean ?: true,
+                )
+            }
+            is eu.kanade.tachiyomi.source.model.Filter.Group<*> -> {
+                val children = filter.state as? List<eu.kanade.tachiyomi.source.model.Filter<*>> ?: return
+                val childStates = map["state"] as? List<Any?> ?: return
+                for (i in children.indices) {
+                    val childMap = childStates.getOrNull(i) as? Map<String, Any?> ?: continue
+                    applyState(children[i], childMap)
+                }
+            }
+            else -> { /* header, separator — no mutable state */ }
         }
     }
 
