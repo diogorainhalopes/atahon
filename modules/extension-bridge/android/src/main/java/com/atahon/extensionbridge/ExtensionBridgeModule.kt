@@ -185,6 +185,17 @@ class ExtensionBridgeModule : Module() {
             result
         }
 
+        // ── Extension WebView login (Chrome Custom Tab) ──────────────────────────
+        AsyncFunction("openLoginWebView") { sourceId: String, url: String ->
+            val activity = appContext.currentActivity
+                ?: throw Exception("No activity available")
+            val customTabsIntent = androidx.browser.customtabs.CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .build()
+            customTabsIntent.launchUrl(activity, android.net.Uri.parse(url))
+            Logger.i("ExtensionBridge", "openLoginWebView: source=$sourceId url=$url")
+        }
+
         // ── Download foreground service ───────────────────────────────────────────
         AsyncFunction("startDownloadService") { total: Int ->
             DownloadForegroundService.start(context, total)

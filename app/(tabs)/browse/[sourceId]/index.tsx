@@ -75,9 +75,16 @@ function MangaCard({ manga, inLibrary, onPress }: MangaCardProps) {
 // ─── SourceBrowseScreen ───────────────────────────────────────────────────────
 
 export default function SourceBrowseScreen() {
-  const { sourceId, name } = useLocalSearchParams<{ sourceId: string; name: string }>();
+  const { sourceId, name, pkgName, isConfigurable, baseUrl } = useLocalSearchParams<{
+    sourceId: string;
+    name: string;
+    pkgName?: string;
+    isConfigurable?: string;
+    baseUrl?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const canLogin = isConfigurable === '1' && !!pkgName && !!baseUrl;
 
   const [tab, setTab] = useState<Tab>('popular');
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,6 +173,19 @@ export default function SourceBrowseScreen() {
           </View>
         ) : (
           <Text style={styles.title} numberOfLines={1}>{name ?? 'Browse'}</Text>
+        )}
+
+        {canLogin && !searchActive && (
+          <TouchableOpacity
+            onPress={() => router.push({
+              pathname: '/extensions/[pkgName]/login',
+              params: { pkgName: pkgName!, sourceId, loginUrl: baseUrl!, name },
+            })}
+            style={styles.loginBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.loginBtnText}>Login</Text>
+          </TouchableOpacity>
         )}
 
         <TouchableOpacity
@@ -321,6 +341,17 @@ const styles = StyleSheet.create({
   },
   searchBtn: {
     padding: spacing[2],
+  },
+  loginBtn: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    backgroundColor: colors.accent.muted,
+    borderRadius: radius.md,
+  },
+  loginBtnText: {
+    fontSize: typography.sizes.sm,
+    fontFamily: fontFamily.bold,
+    color: colors.accent.DEFAULT,
   },
   tabs: {
     flexDirection: 'row',

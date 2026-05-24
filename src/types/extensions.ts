@@ -61,7 +61,9 @@ export interface SourceInfo {
   name: string;
   lang: string;
   iconUrl?: string;
+  baseUrl?: string;
   supportsLatest: boolean;
+  isConfigurable?: boolean;
   isNsfw: boolean;
   versionId: number;
 }
